@@ -16,6 +16,7 @@ long nextPos[4];
 long curPos[4];
 uint8_t step[4];
 uint8_t dir[4];
+uint32_t deltat = 1000;
 
 void onIndex(HttpRequest &request, HttpResponse &response)
 {
@@ -79,6 +80,8 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 			index = 2;
 		else if (motor == "E")
 			index = 3;
+		else if (motor == "T")
+			deltat = atoi(posStr.c_str());
 		if (index > -1)
 		{
 			nextPos[index] = atol(posStr.c_str());
@@ -115,18 +118,32 @@ void blink1()
 			if (nextPos[i] > curPos[i])
 				sign = 1;
 			if (sign > 0)
-				digitalWrite(dir[i], 0);
+				digitalWrite(dir[i], false);
 			else
-				digitalWrite(dir[i], 1);
-			delayMicroseconds(5);
+				digitalWrite(dir[i], true);
+			delayMicroseconds(8);
 
-			digitalWrite(step[i], true);
-			delayMicroseconds(10);
 			digitalWrite(step[i], false);
+			delayMicroseconds(30);
+			digitalWrite(step[i], true);
 			curPos[i] = curPos[i] + sign;
 		}
 	}
-	procTimer.initializeUs(100, blink1).startOnce();
+	procTimer.initializeUs(deltat, blink1).startOnce();
+}
+
+void blink2()
+{
+	system_soft_wdt_feed();
+	for (int i = 0; i < 4; i++)
+	{
+		digitalWrite(step[i], false);
+		digitalWrite(dir[i], false);
+		delayMicroseconds(10);
+		digitalWrite(step[i], true);
+		digitalWrite(dir[i], true);
+	}
+	procTimer.initializeUs(deltat, blink2).startOnce();
 }
 
 void startWebServer()
@@ -135,7 +152,7 @@ void startWebServer()
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
 
-// Web Sockets configuration
+	// Web Sockets configuration
 	server.enableWebSockets(true);
 	server.setWebSocketConnectionHandler(wsConnected);
 	server.setWebSocketMessageHandler(wsMessageReceived);
@@ -146,7 +163,8 @@ void startWebServer()
 	Serial.println(WifiStation.getIP());
 	Serial.println("==============================\r\n");
 
-	procTimer.initializeUs(100, blink1).startOnce();
+	//procTimer.initializeUs(deltat, blink1).startOnce();
+	procTimer.initializeUs(deltat, blink1).startOnce();
 }
 
 // Will be called when WiFi station was connected to AP
@@ -160,8 +178,6 @@ void connectOk()
 
 }
 
-
-
 void couldntConnect()
 {
 	Serial.println("Couldn't connect");
@@ -169,31 +185,36 @@ void couldntConnect()
 
 void init()
 {
-	Serial.systemDebugOutput(true);
-	System.setCpuFrequency(eCF_160MHz);
-	system_soft_wdt_stop();
-
 	Serial.println("Init running...");
+	//---------------------
+	step[0] = 2;  //2
+	dir[0] = 0;   //0
 
-	step[0] = 15;
-	dir[0] = 2;
+	step[1] = 4;  //4
+	dir[1] = 5;   //5
+	//---------------------
+	step[2] = 13;
+	dir[2] = 12;
 
-	step[1] = 0;
-	dir[1] = 5;
-
-	step[2] = 4;
-	dir[2] = 13;
-
-	step[3] = 12;
-	dir[3] = 14;
+	step[3] = 14;
+	dir[3] = 16;
+	//---------------------
 
 	for (int i = 0; i < 4; i++)
 	{
 		pinMode(step[i], OUTPUT);
 		pinMode(dir[i], OUTPUT);
+		digitalWrite(step[i], true);
+		digitalWrite(dir[i], true);
 		curPos[i] = 0;
 		nextPos[i] = 0;
 	}
+	Serial.systemDebugOutput(true);
+	System.setCpuFrequency(eCF_160MHz);
+	system_soft_wdt_stop();
+
+	Serial.println("Output init ended.");
+
 
 	WifiStation.enable(true);
 	WifiStation.config(WIFI_SSID, WIFI_PWD);

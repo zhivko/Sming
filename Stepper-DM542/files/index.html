@@ -8,8 +8,12 @@
   <body>
 
     <h1>4 stepper control from ESP8266</h1>
-    <input type="text" id="gCodeCmd" onkeypress="return searchKeyPress(event);" />
-    <input type="button" id="btn" Value="Search" onclick="doSend();" />
+    <input type="text" id="gCodeCmd1" onkeypress="return searchKeyPress(event);" value="X5000 Y5000 Z5000 E5000" size="30" />
+    <input type="button" id="btn1" Value="Send" onclick="doSend(document.getElementById('gCodeCmd1'));" />
+	<br>
+    <input type="text" id="gCodeCmd2" onkeypress="return searchKeyPress(event);" value="X0 Y0 Z0 E0" size="30" />
+    <input type="button" id="btn2" Value="Send" onclick="doSend(document.getElementById('gCodeCmd2'));" />
+	<br>
 
     <script type="text/javascript">
 	
@@ -36,8 +40,8 @@
 	  }
 	  function testWebSocket()
 	  {
-		wsUri = "ws://" + location.host + "/";
-		//var wsUri = "ws://192.168.1.21/";
+		var wsUri = "ws://" + location.host + "/";
+		//var wsUri = "ws://192.168.1.18/";
 		websocket = new WebSocket(wsUri);
 		websocket.onopen = function(evt) { onOpen(evt) };
 		websocket.onclose = function(evt) { onClose(evt) };
@@ -59,7 +63,7 @@
 	  {
 		writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
 		document.getElementById("result").innerHTML = evt.data;
-		line1.append(new Date().getTime(), evt.data);
+		//line1.append(new Date().getTime(), evt.data);
 	  	currentTimeMs = (new Date()).getTime();
 		//websocket.close();
 	  }
@@ -67,10 +71,10 @@
 	  {
 		writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
 	  }
-	  function doSend()
+	  function doSend(element)
 	  {
 		//writeToScreen("SENT: " + message); 
-		textToSend = document.getElementById("gCodeCmd").value;
+		textToSend = element.value;
 		websocket.send(textToSend);
 	  }
 	  function writeToScreen(message)
@@ -88,6 +92,10 @@
 	  }
 	  window.addEventListener("load", init, false);
     </script>
+	<div id="output"></div>
+	<p>Current value: 
+		<div id="result"></div>
+	</p>
 	<div id="output"></div>
   </body>
 </html>
