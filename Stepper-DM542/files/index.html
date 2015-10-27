@@ -13,7 +13,201 @@
 	<br>
     <input type="text" id="gCodeCmd2" onkeypress="return searchKeyPress(event);" value="X0 Y0 Z0 E0" size="30" />
     <input type="button" id="btn2" Value="Send" onclick="doSend(document.getElementById('gCodeCmd2'));" />
-	<br>
+<br/>
+
+  <svg width="320" height="260" xmlns="http://www.w3.org/2000/svg" version="1.1">
+
+    <defs>
+
+        <style type="text/css"><![CDATA[
+
+    text {
+        font-family: helvetica;
+        stroke: black;
+        stroke-width: 1;
+        fill: black;
+    }
+
+    text.home {
+        font-family: helvetica;
+        stroke: black;
+        stroke-width: 1;
+        fill: black;
+        font-weight: 900;
+        font-size: 16;
+        pointer-events: none;
+    }
+
+    text.scl {
+        font-family: helvetica;
+        stroke: white;
+        stroke-width: 1;
+        fill: white;
+        pointer-events: none;
+        }
+
+    circle.scl {
+        fill: black;
+        fill-opacity: 0.5;
+        stroke: red;
+        stroke-width: 3;
+        filter: url(#f1);
+        pointer-events: none;
+   }
+
+    path.home {
+        stroke: black;
+        }
+
+    path.std {
+        stroke: black;
+        stroke-width: 1;
+        filter: url(#f1);
+        }
+
+    rect.std {
+        stroke: black;
+        stroke-width: 1;
+        filter: url(#f1);
+        }
+
+  ]]></style>
+
+        <filter id="f1" x="-1" y="-1" width="300%" height="300%">
+            <feOffset result="offOut" in="SourceAlpha" dx="3" dy="3"/>
+            <feGaussianBlur result="blurOut" in="offOut" stdDeviation="4"/>
+            <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+        </filter>
+
+        <symbol id="HomeIcon" viewBox="0 0 20 18" pointer-events="none">
+            <desc>HomeIcon - house</desc>
+            <path class="home" d="M3,18 v-8 l7,-6 l7,6 v8 h-5 v-6 h-4 v6 z" fill="black"/>
+            <path class="home" d="M0,10 l10-8.5 l10,8.5" stroke-width="1.5" fill="none"/>
+            <path class="home" d="M15,3 v2.8 l1,.8 v-3.6 z"/>
+        </symbol>
+
+        <symbol id="JogRose" viewBox="20 -10 260 260">
+
+            <g id="Jog100" fill="#c0c0c0" class="std">
+                <g id="Y+100" onmouseup="jogXYClick('Y100')" transform="translate(120 120)">
+                    <path class="std" d="M-60 -67.07 L-75.93,-83 A112.5,112.5 0 0,1 75,-83 L60,-67.07 A90,90 0 0,0 -60.00,-67.07 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout" />
+                    </path>
+                </g>
+                <g id="X+100" onmouseup="jogXYClick('X100')" transform="translate(120 120)">
+                    <path class="std" d="M67.07,-60 L83,-75.93 A112.5,112.5 0 0,1 83,75.93 L67.07,60 A90,90 0 0,0 67.07,-60">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="Y-100" onmouseup="jogXYClick('Y-100')" transform="translate(120 120)">
+                    <path class="std" d="M-60,67.07 L-75.93,83 A112.5,112.5 0 0,0 75,83 L60,67.07 A90,90 0 0,1 -60.00,67.07 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X-100" onmouseup="jogXYClick('X-100')" transform="translate(120 120)">
+                    <path class="std" d="M-67.07,-60 L-83,-75.93 A112.5,112.5 0 0,0 -83,75.93 L-67.07,60 A90,90 0 0,1 -67.07,-60 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+            </g>
+            <g id="Jog10" fill="#d0d0d0">
+
+                <g id="Y+10" onmouseup="jogXYClick('Y10')" transform="translate(120 120)">
+                    <path class="std" d="M-44.06 -51.13 L-60,-67.07 A90,90 0 0,1 60,-67 L44.06,-51.13 A67.5,67.5 0 0,0 -44.06,-51.13 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X+10" onmouseup="jogXYClick('X10')" transform="translate(120 120)">
+                    <path class="std" d="M51.13 44.06 L67.07,60 A90,90 0 0,0 67.07,-60 L51.13,-44.06 A67.5,67.5 0 0,1 51.13,44.06 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="Y-10" onmouseup="jogXYClick('Y-10')" transform="translate(120 120)">
+                    <path class="std" d="M-44.06 51.13 L-60,67.07 A90,90 0 0,0 60,67 L44.06,51.13 A67.5,67.5 0 0,1 -44.06,51.13 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X-10" onmouseup="jogXYClick('X-10')" transform="translate(120 120)">
+                    <path class="std" d="M-51.13 44.06 L-67.07,60 A90,90 0 0,1 -67.07,-60 L-51.13,-44.06 A67.5,67.5 0 0,0 -51.13,44.06 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+            </g>
+
+            <g id="Jog1" fill="#e0e0e0">
+                <g id="Y+1" onmouseup="jogXYClick('Y1')" transform="translate(120 120)">
+                    <path class="std" d="M-28.09 -35.16 L-44.06,-51.13 A67.5,67.5 0 0,1 44.06,-51.13 L28.09,-35.16 A45,45 0 0,0 -28.09,-35.16 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X+1" onmouseup="jogXYClick('X1')" transform="translate(120 120)">
+                    <path class="std" d="M35.16 -28.09 L51.13,-44.06 A67.5,67.05 0 0,1 51.13,44.06 L35.16,28.09 A45,45 0 0,0 35.16,-28.09 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="Y-1" onmouseup="jogXYClick('Y-1')" transform="translate(120 120)">
+                    <path class="std" d="M-28.09 35.16 L-44.06,51.13 A67.5,67.5 0 0,0 44.06,51.13 L28.09,35.16 A45,45 0 0,1 -28.09,35.16 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X-1" onmouseup="jogXYClick('X-1')" transform="translate(120 120)">
+                    <path class="std" d="M-35.16 -28.09 L-51.13,-44.06 A67.5,67.05 0 0,0 -51.13,44.06 L-35.16,28.09 A45,45 0 0,1 -35.16,-28.09 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+            </g>
+
+            <g id="Jog0_1" fill="#f0f0f0">
+                <g id="Y+0.1" onmouseup="jogXYClick('Y0.1')" transform="translate(120 120)">
+                    <path class="std" d="M-28.09 -35.16 A45,45 0 0,1 29.09,-35.16 L0,-7.07 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X+0_1" onmouseup="jogXYClick('X0.1')" transform="translate(120 120)">
+                    <path class="std" d="M35.16 -28.09 A45,45 0 0,1 35.16,28.09 L7.07,0 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="Y-0_1" onmouseup="jogXYClick('Y-0.1')" transform="translate(120 120)">
+                    <path class="std" d="M-28.09 35.16 A45,45 0 0,0 29.09,35.16 L0,7.07 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+                <g id="X-0_1" onmouseup="jogXYClick('X-0.1')" transform="translate(120 120)">
+                    <path class="std" d="M-35.16 -28.09 A45,45 0 0,0 -35.16,28.09 L-7.07,0 z">
+                        <set attributeName="fill" to="orange" begin="mouseover" end="mouseout"/>
+                    </path>
+                </g>
+            </g>
+
+            <g id="Decoration" pointer-events="none"
+                font-weight="900" font-size="11" fill-opacity=".6">
+                <path class="std" d="M120,20 l17,17 h-10 v11 h-14 v-11 h-10 z" fill="SteelBlue"/>   <!-- y pos arrow -->
+                <path class="std" d="M120,220 l17,-17 h-10 v-11 h-14 v11 h-10 z" fill="SteelBlue"/> <!-- y neg arrow -->
+                <path class="std" d="M20,120 l17,17 v-10 h11 v-14 h-11 v-10 z" fill="Khaki"/> <!-- x neg arrow -->
+                <path class="std" d="M220,120 l-17,-17 v10 h-11 v14 h11 v10 z" fill="Khaki"/> <!-- x pos arrow -->
+                <text x="113" y="37" > +Y </text>
+                <text x="113" y="212"> -Y </text>
+                <text x="27" y="124"> -X </text>
+                <text x="196" y="124"> +X </text>
+            </g>
+
+        </symbol>
+
+        <symbol id="PrinterCtl">
+            <use x="0" y="0" xlink:href="#JogRose"/>
+            <use x="260" y="0" xlink:href="#JogBar"/>
+        </symbol>
+
+    </defs>
+
+    <use x="0" y="0" xlink:href="#PrinterCtl"/>
+
+  </svg>
+
+
+
+
 
     <script type="text/javascript">
 	
