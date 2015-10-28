@@ -137,10 +137,12 @@ void reportPosition()
 {
 	char buf[20];
 	sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2], curPos[3]);
+	String message = String(buf);
+
 	WebSocketsList &clients = server.getActiveWebSockets();
 	for (int i = 0; i < clients.count(); i++)
 	{
-		clients[i].sendString(buf);
+		clients[i].sendString(message);
 	}
 }
 
