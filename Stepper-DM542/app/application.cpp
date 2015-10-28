@@ -9,6 +9,7 @@
 #endif
 
 Timer procTimer;
+Timer reportTimer;
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -109,9 +110,9 @@ void wsDisconnected(WebSocket& socket)
 
 void blink1()
 {
-	system_soft_wdt_feed();
 	for (int i = 0; i < 4; i++)
 	{
+		system_soft_wdt_feed();
 		if (curPos[i] != nextPos[i])
 		{
 			int8_t sign = -1;
@@ -132,18 +133,15 @@ void blink1()
 	procTimer.initializeUs(deltat, blink1).startOnce();
 }
 
-void blink2()
+void reportPosition()
 {
-	system_soft_wdt_feed();
-	for (int i = 0; i < 4; i++)
+	char buf[20];
+	sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2], curPos[3]);
+	WebSocketsList &clients = server.getActiveWebSockets();
+	for (int i = 0; i < clients.count(); i++)
 	{
-		digitalWrite(step[i], false);
-		digitalWrite(dir[i], false);
-		delayMicroseconds(10);
-		digitalWrite(step[i], true);
-		digitalWrite(dir[i], true);
+		clients[i].sendString(buf);
 	}
-	procTimer.initializeUs(deltat, blink2).startOnce();
 }
 
 void startWebServer()
@@ -163,7 +161,7 @@ void startWebServer()
 	Serial.println(WifiStation.getIP());
 	Serial.println("==============================\r\n");
 
-	//procTimer.initializeUs(deltat, blink1).startOnce();
+	reportTimer.initializeMs(1000, reportPosition).start();
 	procTimer.initializeUs(deltat, blink1).startOnce();
 }
 

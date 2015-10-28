@@ -17,7 +17,7 @@
 
 	  function init()
 	  {
-		output = document.getElementById("output");
+		output = parent.document.getElementById("output");
 		testWebSocket();	
 	  }
 	  function testWebSocket()
@@ -47,10 +47,14 @@
 	  function onMessage(evt)
 	  {
 		writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
-		document.getElementById("result").innerHTML = evt.data;
-		//line1.append(new Date().getTime(), evt.data);
-	  	currentTimeMs = (new Date()).getTime();
-		//websocket.close();
+		if (evt.data.slice(0,1) == 'X')
+		{
+			var res = evt.data.split(' ');
+			document.getElementById('PositionX').innerHtml = res[0];
+			document.getElementById('PositionY').innerHtml = res[1];
+			document.getElementById('PositionZ').innerHtml = res[2];
+			document.getElementById('PositionE').innerHtml = res[3];
+		}
 	  }
 	  function onError(evt)
 	  {
@@ -69,7 +73,7 @@
 	  }
 	  function writeToScreen(message)
 	  {
-		var pre = document.createElement("p");
+		var pre = parent.document.createElement("p");
 		pre.style.wordWrap = "break-word";
 		pre.innerHTML = message;
 		output.appendChild(pre);
@@ -93,7 +97,7 @@
 			var command = "Z" + sign + value + " E" + sign + value;
 
 		writeToScreen("SENT: " + command); 
-		doSendCommand(command);		
+		doSendCommand(command);
 	}
 
 	function jogClick(a)
