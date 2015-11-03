@@ -15,14 +15,34 @@
 #include "../../Wiring/WVector.h"
 #include "../../Wiring/IPAddress.h"
 
+extern "C" {
+	#include <smartconfig.h>
+}
+
 enum EStationConnectionStatus
 {
-    eSCS_Idle = 0,
+	eSCS_Idle = 0,
 	eSCS_Connecting,
 	eSCS_WrongPassword,
 	eSCS_AccessPointNotFound,
 	eSCS_ConnectionFailed,
 	eSCS_GotIP
+};
+
+enum SmartConfigType
+{
+	SCT_EspTouch = SC_TYPE_ESPTOUCH,
+	SCT_AirKiss = SC_TYPE_AIRKISS,
+	SCT_EspTouch_AirKiss = SC_TYPE_ESPTOUCH_AIRKISS
+};
+
+enum SmartConfigEvent
+{
+	SCE_Wait = SC_STATUS_WAIT,
+	SCE_FindChannel = SC_STATUS_FIND_CHANNEL,
+	SCE_GotSsid = SC_STATUS_GETTING_SSID_PSWD,
+	SEC_Link = SC_STATUS_LINK,
+	SEC_LinkOver = SC_STATUS_LINK_OVER
 };
 
 class BssInfo;
@@ -31,6 +51,7 @@ class Timer;
 typedef Vector<BssInfo> BssList;
 typedef Delegate<void(bool, BssList)> ScanCompletedDelegate;
 typedef Delegate<void()> ConnectionDelegate;
+typedef Delegate<void(sc_status status, void *pdata)> SmartConfigDelegate;
 
 class StationClass : protected ISystemReadyHandler
 {
@@ -67,6 +88,10 @@ public:
 	void waitConnection(ConnectionDelegate successfulConnected);
 	void waitConnection(ConnectionDelegate successfulConnected, int secondsTimeOut, ConnectionDelegate connectionNotEstablished);
 
+	void smartConfigStart(SmartConfigType sctype, SmartConfigDelegate callback = NULL);
+	void smartConfigStop();
+	bool callSmartConfigCallback(sc_status status, void *pdata);
+
 protected:
 	virtual void onSystemReady();
 	static void staticScanCompleted(void *arg, STATUS status);
@@ -76,6 +101,7 @@ protected:
 
 private:
 	ScanCompletedDelegate scanCompletedCallback;
+	SmartConfigDelegate smartConfigCallback;
 	bool runScan;
 
 	ConnectionDelegate onConnectOk;
