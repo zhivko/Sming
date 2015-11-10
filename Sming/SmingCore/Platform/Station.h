@@ -77,6 +77,7 @@ public:
 	String getMAC();
 	IPAddress getNetworkMask();
 	IPAddress getNetworkGateway();
+	IPAddress getNetworkBroadcast();
 
 	bool setIP(IPAddress address);
 	bool setIP(IPAddress address, IPAddress netmask, IPAddress gateway);
@@ -90,7 +91,6 @@ public:
 
 	void smartConfigStart(SmartConfigType sctype, SmartConfigDelegate callback = NULL);
 	void smartConfigStop();
-	bool callSmartConfigCallback(sc_status status, void *pdata);
 
 protected:
 	virtual void onSystemReady();
@@ -99,9 +99,12 @@ protected:
 	void internalCheckConnection();
 	static void staticCheckConnection();
 
+	void internalSmartConfig(sc_status status, void *pdata);
+	static void staticSmartConfigCallback(sc_status status, void *pdata);
+
 private:
 	ScanCompletedDelegate scanCompletedCallback;
-	SmartConfigDelegate smartConfigCallback;
+	SmartConfigDelegate smartConfigCallback = NULL;
 	bool runScan;
 
 	ConnectionDelegate onConnectOk;
