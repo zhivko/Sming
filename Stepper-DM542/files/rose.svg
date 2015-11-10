@@ -69,7 +69,7 @@
         stroke-width: 1;
         fill: black;
         font-weight: 900;
-        font-size: 16;
+        font-size: 16px;
         pointer-events: none;
     }
 
@@ -137,7 +137,6 @@
          mode="normal"
          id="feBlend13" />
     </filter>
-    <script xlink:href="script.js" />
     <symbol
        id="JogRose"
        viewBox="-50 -80 360 400">
@@ -146,8 +145,8 @@
          fill="#c0c0c0"
          class="std">
         <g
-           id="Y+100"
-           onmouseup="jogXYClick('Y+100')"
+           id="Z+100"
+           onmouseup="top.jogXYClick('Z+100')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -162,7 +161,7 @@
         </g>
         <g
            id="X+100"
-           onmouseup="jogXYClick('X+100')"
+           onmouseup="top.jogXYClick('X+100')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -176,8 +175,8 @@
           </path>
         </g>
         <g
-           id="Y-100"
-           onmouseup="jogXYClick('Y-100')"
+           id="Z-100"
+           onmouseup="top.jogXYClick('Z-100')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -192,7 +191,7 @@
         </g>
         <g
            id="X-100"
-           onmouseup="jogXYClick('X-100')"
+           onmouseup="top.jogXYClick('X-100')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -210,8 +209,8 @@
          id="Jog10"
          fill="#d0d0d0">
         <g
-           id="Y+10"
-           onmouseup="jogXYClick('Y+10')"
+           id="Z+10"
+           onmouseup="top.jogXYClick('Z+10')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -226,7 +225,7 @@
         </g>
         <g
            id="X+10"
-           onmouseup="jogXYClick('X+10')"
+           onmouseup="top.jogXYClick('X+10')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -240,8 +239,8 @@
           </path>
         </g>
         <g
-           id="Y-10"
-           onmouseup="jogXYClick('Y-10')"
+           id="Z-10"
+           onmouseup="top.jogXYClick('Z-10')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -256,7 +255,7 @@
         </g>
         <g
            id="X-10"
-           onmouseup="jogXYClick('X-10')"
+           onmouseup="top.jogXYClick('X-10')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -274,8 +273,8 @@
          id="Jog1"
          fill="#e0e0e0">
         <g
-           id="Y+1"
-           onmouseup="jogXYClick('Y+1')"
+           id="Z+1"
+           onmouseup="top.jogXYClick('Z+1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -290,7 +289,7 @@
         </g>
         <g
            id="X+1"
-           onmouseup="jogXYClick('X+1')"
+           onmouseup="top.jogXYClick('X+1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -304,8 +303,8 @@
           </path>
         </g>
         <g
-           id="Y-1"
-           onmouseup="jogXYClick('Y-1')"
+           id="Z-1"
+           onmouseup="top.jogXYClick('Z-1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -320,7 +319,7 @@
         </g>
         <g
            id="X-1"
-           onmouseup="jogXYClick('X-1')"
+           onmouseup="top.jogXYClick('X-1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -338,8 +337,8 @@
          id="Jog0_1"
          fill="#f0f0f0">
         <g
-           id="Y+0.1"
-           onmouseup="jogXYClick('Y+0.1')"
+           id="Z+0.1"
+           onmouseup="top.jogXYClick('Z+0.1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -354,7 +353,7 @@
         </g>
         <g
            id="X+0_1"
-           onmouseup="jogXYClick('X+0.1')"
+           onmouseup="top.jogXYClick('X+0.1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -368,8 +367,8 @@
           </path>
         </g>
         <g
-           id="Y-0_1"
-           onmouseup="jogXYClick('Y-0.1')"
+           id="Z-0.1"
+           onmouseup="top.jogXYClick('Z-0.1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -384,7 +383,7 @@
         </g>
         <g
            id="X-0_1"
-           onmouseup="jogXYClick('X-0.1')"
+           onmouseup="top.jogXYClick('X-0.1')"
            transform="translate(120 120)">
           <path
              class="std"
@@ -400,7 +399,7 @@
       </g>
       <g
          id="Decoration_E_GOR"
-         onmouseup="jogClick('E+10')"
+         onmouseup="top.jogClick('E+100')"
          fill-opacity=".6">
         <path
            inkscape:connector-curvature="0"
@@ -416,7 +415,7 @@
       </g>
       <g
          id="Decoration_E_DOL"
-         onmouseup="jogClick('E-10')"
+         onmouseup="top.jogClick('E-100')"
          fill-opacity=".6">
         <path
            class="arrow"
@@ -438,7 +437,7 @@
         <path
            inkscape:connector-curvature="0"
            id="Z_DOL"
-           onmouseup="jogClick('Z-10')"
+           onmouseup="top.jogClick('Z-100')"
            d="m 120,0 17,-17 -10,0 0,-11 -14,0 0,11 -10,0 z"
            class="arrow">
           <set
@@ -457,7 +456,7 @@
            class="arrow"
            d="m 120,-60 17,17 -10,0 0,11 -14,0 0,-11 -10,0 z"
            id="Z_GOR"
-           onmouseup="jogClick('Z+10')"
+           onmouseup="top.jogClick('Z+100')"
            inkscape:connector-curvature="0">
           <set
              attributeName="fill"
@@ -475,7 +474,7 @@
            class="arrow"
            d="m -60,120 17,17 0,-10 11,0 0,-14 -11,0 0,-10 z"
            id="X_LEVO"
-           onmouseup="jogClick('X-10')"
+           onmouseup="top.jogClick('X-100')"
            inkscape:connector-curvature="0">
           <set
              attributeName="fill"
@@ -493,7 +492,7 @@
            class="arrow"
            d="m 0,120 -17,-17 0,10 -11,0 0,14 11,0 0,10 z"
            id="X_DESNO"
-           onmouseup="jogClick('X+10')"
+           onmouseup="top.jogClick('X+100')"
            inkscape:connector-curvature="0">
           <set
              attributeName="fill"
@@ -511,7 +510,7 @@
            id="Y_DESNO"
            d="m 300,120 -17,-17 0,10 -11,0 0,14 11,0 0,10 z"
            class="arrow"
-           onmouseup="jogClick('Y+10')"
+           onmouseup="top.jogClick('Y+100')"
            inkscape:connector-curvature="0">
           <set
              attributeName="fill"
@@ -528,7 +527,7 @@
         <path
            inkscape:connector-curvature="0"
            id="Y_LEVO"
-           onmouseup="jogClick('Y-10')"
+           onmouseup="top.jogClick('Y-100')"
            d="m 240,120 17,17 0,-10 11,0 0,-14 -11,0 0,-10 z"
            class="arrow">
           <set

@@ -8,22 +8,22 @@
   <body>
 
     <h1>4 stepper control from ESP8266</h1>
-    <input type="text" id="gCodeCmd1" onkeypress="return searchKeyPress(event);" value="X5000 Y5000 Z5000 E5000" size="30" />
+    <input type="text" id="gCodeCmd1" onkeypress="return searchKeyPress2(event);" value="X5000 Y5000 Z5000 E5000" size="30" />
     <input type="button" id="btn1" Value="Send" onclick="doSend(document.getElementById('gCodeCmd1'));" />
 	<br>
-    <input type="text" id="gCodeCmd2" onkeypress="return searchKeyPress(event);" value="X0 Y0 Z0 E0" size="30" />
+    <input type="text" id="gCodeCmd2" onkeypress="return searchKeyPress2(event);" value="X0 Y0 Z0 E0" size="30" />
     <input type="button" id="btn2" Value="Send" onclick="doSend(document.getElementById('gCodeCmd2'));" />
-<br/>
-
-<object data="rose.svg" type="image/svg+xml">
-  <img src="yourfallback.jpg" />
-</object>
-
-<br/>
-	<div id="output"></div>
-	<p>Current value: 
-		<div id="result"></div>
-	</p>
-	<div id="output"></div>
+    <br>
+    <br>
+    Select oposite or translate options:
+    <br>
+        <input type="radio" name="translateOrOposite" value="translate" checked>Translate
+        <input type="radio" name="translateOrOposite" value="oposite">Oposite
+    <p />
+    <object data="rose.svg" type="image/svg+xml" id="roseSvg">
+	</object>    
+    <p/>
+    
+	<div id="output" />
   </body>
 </html>

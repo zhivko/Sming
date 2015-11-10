@@ -3,17 +3,29 @@
 	  
 	  var output;
 
-		function searchKeyPress(e)
+		function searchKeyPress2(e)
 		{
 		    // look for window.event in case event isn't passed in
 		    e = e || window.event;
 		    if (e.keyCode == 13)
 		    {
-		        document.getElementById('btn').click();
+		        document.getElementById('btn2').click();
 		        return false;
 		    }
 		    return true;
 		}
+		
+		function searchKeyPress1(e)
+		{
+		    // look for window.event in case event isn't passed in
+		    e = e || window.event;
+		    if (e.keyCode == 13)
+		    {
+		        document.getElementById('btn1').click();
+		        return false;
+		    }
+		    return true;
+		}		
 
 	  function init()
 	  {
@@ -46,14 +58,14 @@
 	  }
 	  function onMessage(evt)
 	  {
-		writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
-		if (evt.data.slice(0,1) == 'X')
+		//writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
+		var res = evt.data.split(' ');
+		if (evt.data.slice(0,1) == 'X' && res.length==4)
 		{
-			var res = evt.data.split(' ');
-			document.getElementById('PositionX').innerHtml = res[0];
-			document.getElementById('PositionY').innerHtml = res[1];
-			document.getElementById('PositionZ').innerHtml = res[2];
-			document.getElementById('PositionE').innerHtml = res[3];
+			document.getElementById("roseSvg").contentDocument.getElementById('PositionX').textContent = res[0];
+			document.getElementById("roseSvg").contentDocument.getElementById('PositionY').textContent = res[1];
+			document.getElementById("roseSvg").contentDocument.getElementById('PositionZ').textContent = res[2];
+			document.getElementById("roseSvg").contentDocument.getElementById('PositionE').textContent = res[3];
 		}
 	  }
 	  function onError(evt)
@@ -87,15 +99,36 @@
 
 	function jogXYClick(a)
 	{
-		var bothMotorOption = document.getElementById("bothSingle");
+
+		var radios = document.getElementsByName('translateOrOposite');
+		var translate='';
+		for (var i = 0, length = radios.length; i < length; i++) {
+		    if (radios[i].checked) {
+		        translate = radios[i].value;
+		        break;
+		    }
+		}
 		var coord = a.substring(0, 1);
 		var sign = a.substring(1, 2);
-		var value = a.substring(2, a.length);
-		if (coord = 'X')
-			var command = "X" + sign + value + " Y" + sign + value;
+		var value = a.substring(2, a.length) * 10;
+		if (translate=='translate')
+		{
+			if (coord == 'X' || coord == 'Y')
+				var command = "X" + sign + value + " Y" + sign + value;
+			else
+				var command = "Z" + sign + value + " E" + sign + value;
+		}
 		else
-			var command = "Z" + sign + value + " E" + sign + value;
-
+		{
+			if (sign=='+')
+				signOposite='-';
+			else
+				signOposite='+';
+			if (coord == 'X' || coord == 'Y')
+				var command = "X" + sign + value + " Y" + signOposite + value;
+			else
+				var command = "Z" + sign + value + " E" + signOposite + value;
+		}
 		writeToScreen("SENT: " + command); 
 		doSendCommand(command);
 	}

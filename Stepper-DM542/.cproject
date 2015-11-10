@@ -10,6 +10,11 @@
 						<entry flags="RESOLVED" kind="includePath" name="release/c:\Espressif/ESP8266_SDK/include"/>
 						<entry flags="RESOLVED" kind="includePath" name="release/c:\Users\klemen\git\Sming\Sming/SmingCore"/>
 						<entry flags="RESOLVED" kind="includePath" name="release/c:\Users\klemen\git\Sming\Sming/system"/>
+						<entry flags="RESOLVED" kind="includePath" name="/home/kz/git/Sming/Sming"/>
+						<entry flags="RESOLVED" kind="includePath" name="/home/kz/git/Sming/Sming/system/include"/>
+						<entry flags="RESOLVED" kind="includePath" name="/home/kz/git/Sming/Sming/SmingCore"/>
+						<entry flags="RESOLVED" kind="includePath" name="/home/kz/git/Sming/Sming/system"/>
+						<entry flags="RESOLVED" kind="includePath" name="/home/kz/esp8266/esp-open-sdk/sdk/include"/>
 					</externalSetting>
 				</externalSettings>
 				<extensions>
