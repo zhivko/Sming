@@ -1,6 +1,8 @@
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <Wiring/SplitString.h>
+#include <rboot/rboot.h>
+#include <rboot/appcode/rboot-api.h>
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
@@ -23,6 +25,67 @@ uint8_t dir[4];
 uint32_t deltat = 1000;
 String lastPositionMessage = "";
 
+rBootHttpUpdate* otaUpdater = 0;
+
+String ROM_0_URL= "http://192.168.1.23:8000/rom0.bin";
+String SPIFFS_URL= "http://192.168.1.23:8000/spiff_rom.bin";
+
+
+void OtaUpdate_CallBack(bool result) {
+    if (result == true) {
+        // success
+        uint8 slot;
+        slot = rboot_get_current_rom();
+        if (slot == 0) slot = 1; else slot = 0;
+        // set to boot new rom and then reboot
+        Serial.printf("Firmware updated, rebooting to rom %d...\r\n", slot);
+        rboot_set_current_rom(slot);
+        System.restart();
+    } else {
+        // fail
+        Serial.println("Firmware update failed!");
+    }
+}
+
+void OtaUpdate() {
+
+    uint8 slot;
+    rboot_config bootconf;
+
+    // need a clean object, otherwise if run before and failed will not run again
+    if (otaUpdater) delete otaUpdater;
+    otaUpdater = new rBootHttpUpdate();
+
+    // select rom slot to flash
+    bootconf = rboot_get_config();
+    slot = bootconf.current_rom;
+    if (slot == 0) slot = 1; else slot = 0;
+
+#ifndef RBOOT_TWO_ROMS
+    // flash rom to position indicated in the rBoot config rom table
+    otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
+#else
+    // flash appropriate rom
+    if (slot == 0) {
+        otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
+    } else {
+        otaUpdater->addItem(bootconf.roms[slot], ROM_1_URL);
+    }
+#endif
+
+    // use user supplied values (defaults for 4mb flash in makefile)
+    if (slot == 0) {
+        otaUpdater->addItem(RBOOT_SPIFFS_0, SPIFFS_URL);
+    } else {
+        otaUpdater->addItem(RBOOT_SPIFFS_1, SPIFFS_URL);
+    }
+
+    // set a callback
+    otaUpdater->setCallback(OtaUpdate_CallBack);
+
+    // start update
+    otaUpdater->start();
+}
 
 void IRAM_ATTR interruptHandler()
 {
@@ -31,7 +94,7 @@ void IRAM_ATTR interruptHandler()
 	Serial.println("Let's do cloud magic!");
 
 	// Start cloud update
-	airUpdater.start();
+	OtaUpdate();
 }
 
 void onIndex(HttpRequest &request, HttpResponse &response)
@@ -247,9 +310,10 @@ void connectOk()
 	Serial.println("IP: ");
 	Serial.println(WifiStation.getIP().toString());
 
+/*
 	airUpdater.addItem(0x0000, "http://192.168.1.23/0x00000.bin");
 	airUpdater.addItem(0x9000, "http://192.168.1.23/0x09000.bin");
-
+*/
 	Serial.println("You have 5 sec to press program button for air update.");
 	attachInterrupt(UPDATE_PIN, interruptHandler, CHANGE);
 
@@ -263,6 +327,15 @@ void couldntConnect()
 }
 
 
+void ShowInfo() {
+    Serial.printf("\r\nSDK: v%s\r\n", system_get_sdk_version());
+    Serial.printf("Free Heap: %d\r\n", system_get_free_heap_size());
+    Serial.printf("CPU Frequency: %d MHz\r\n", system_get_cpu_freq());
+    Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
+    Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
+    //Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+}
+
 void init()
 {
 	Serial.println("Init running...");
@@ -270,6 +343,8 @@ void init()
 	Serial.systemDebugOutput(true);
 	System.setCpuFrequency(eCF_160MHz);
 	system_soft_wdt_stop();
+
+	ShowInfo();
 
 	WifiAccessPoint.enable(false);
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
