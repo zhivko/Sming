@@ -27,8 +27,8 @@ String lastPositionMessage = "";
 
 rBootHttpUpdate* otaUpdater = 0;
 
-String ROM_0_URL= "http://192.168.1.23:8000/rom0.bin";
-String SPIFFS_URL= "http://192.168.1.23:8000/spiff_rom.bin";
+String ROM_0_URL= "http://192.168.1.24/rom0.bin";
+String SPIFFS_URL= "http://192.168.1.24/spiff_rom.bin";
 
 
 void OtaUpdate_CallBack(bool result) {
@@ -146,14 +146,17 @@ void reportPosition()
 void wsConnected(WebSocket& socket)
 {
 	totalActiveSockets++;
+	lastPositionMessage="";
 	reportPosition();
 	// Notify everybody about new connection
+	/*
 	WebSocketsList &clients = server.getActiveWebSockets();
 	for (int i = 0; i < clients.count(); i++)
 	{
 		clients[i].sendString(
 				"New friend arrived! Total: " + String(totalActiveSockets));
 	}
+	*/
 }
 
 void blink1()
@@ -180,7 +183,6 @@ void blink1()
 	}
 	reportPosition();
 	system_soft_wdt_feed();
-
 }
 
 void wsMessageReceived(WebSocket& socket, const String& message)
@@ -192,6 +194,15 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 
 	String commandLine;
 	commandLine = message.c_str();
+
+	if(commandLine.equals("flash"))
+	{
+		server.enableWebSockets(false);
+		procTimer.stop();
+		OtaUpdate();
+		return;
+	}
+
 
 	Vector<String> commandToken;
 	int numToken = splitString(commandLine, ' ', commandToken);
@@ -252,9 +263,8 @@ void wsDisconnected(WebSocket& socket)
 void startWebServer()
 {
 	system_soft_wdt_feed();
-	Serial.println("Starting web server...Phase1");
-
 	detachInterrupt(UPDATE_PIN);
+	Serial.println("Starting web server...Phase1");
 
 	//---------------------
 	step[0] = 2;  //2
@@ -334,6 +344,20 @@ void ShowInfo() {
     Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
     Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
     //Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+
+	Vector<String> files = fileList();
+	if (files.count() > 0) {
+	    Serial.println("\n\rSpiff files:");
+	    Serial.println("----------------------------");
+		for(int i=0;i<files.count();i++)
+		{
+			Serial.println(files[i]);
+		}
+	    Serial.println("----------------------------");
+	} else {
+		Serial.println("Empty spiffs!");
+	}
+
 }
 
 void init()
@@ -343,6 +367,29 @@ void init()
 	Serial.systemDebugOutput(true);
 	System.setCpuFrequency(eCF_160MHz);
 	system_soft_wdt_stop();
+
+	int slot = rboot_get_current_rom();
+#ifndef DISABLE_SPIFFS
+	if (slot == 0) {
+#ifdef RBOOT_SPIFFS_0
+		debugf("trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
+		spiffs_mount_manual(RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
+#else
+		debugf("trying to mount spiffs at %x, length %d", 0x40300000, SPIFF_SIZE);
+		spiffs_mount_manual(0x40300000, SPIFF_SIZE);
+#endif
+	} else {
+#ifdef RBOOT_SPIFFS_1
+		debugf("trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
+		spiffs_mount_manual(RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
+#else
+		debugf("trying to mount spiffs at %x, length %d", 0x40500000, SPIFF_SIZE);
+		spiffs_mount_manual(0x40500000, SPIFF_SIZE);
+#endif
+	}
+#else
+	debugf("spiffs disabled");
+#endif
 
 	ShowInfo();
 
