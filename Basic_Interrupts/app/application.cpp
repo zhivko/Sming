@@ -1,7 +1,7 @@
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 
-#define INT_PIN 0   // GPIO0
+#define INT_PIN 9   // GPIO0
 #define say(a) ( Serial.print(a) )
 
 void IRAM_ATTR interruptHandler()

@@ -2,7 +2,7 @@
 
 #include <WS2812/WS2812.h>
 
-#define LED_PIN 2 // GPIO2
+#define LED_PIN 10 // GPIO2
 
 void init()
 {

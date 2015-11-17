@@ -67,5 +67,6 @@ private:
 };
 
 extern HardwareSerial Serial;
+extern HardwareSerial Serial1;
 
 #endif /* _HARDWARESERIAL_H_ */

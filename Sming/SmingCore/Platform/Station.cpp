@@ -223,7 +223,7 @@ EStationConnectionStatus StationClass::getConnectionStatus()
 
 bool StationClass::startScan(ScanCompletedDelegate scanCompleted)
 {
-	scanCompletedCallback = scanCompleted;
+	scanCompletedDelegate = scanCompleted;
 	if (!scanCompleted) return false;
 
 	bool res = wifi_station_scan(NULL, staticScanCompleted);
@@ -268,7 +268,7 @@ void StationClass::staticScanCompleted(void *arg, STATUS status)
 	BssList list;
 	if (status == OK)
 	{
-		if (WifiStation.scanCompletedCallback )
+		if (WifiStation.scanCompletedDelegate )
 		{
 			bss_info *cur = (bss_info*)arg;
 
@@ -277,7 +277,7 @@ void StationClass::staticScanCompleted(void *arg, STATUS status)
 				list.add(BssInfo(cur));
 				cur = cur->next.stqe_next;
 			}
-			WifiStation.scanCompletedCallback(true, list);
+			WifiStation.scanCompletedDelegate(true, list);
 		}
 
 		debugf("scan completed: %d found", list.count());
@@ -285,8 +285,8 @@ void StationClass::staticScanCompleted(void *arg, STATUS status)
 	else
 	{
 		debugf("scan failed %d", status);
-		if (WifiStation.scanCompletedCallback )
-			WifiStation.scanCompletedCallback(false, list);
+		if (WifiStation.scanCompletedDelegate )
+			WifiStation.scanCompletedDelegate(false, list);
 	}
 }
 
@@ -358,14 +358,16 @@ const char* StationClass::getConnectionStatusName()
 	};
 }
 
-void StationClass::staticSmartConfigCallback(sc_status status, void *pdata) {
-	WifiStation.internalSmartConfig(status, pdata);
+void StationClass::staticSmartConfigCallback(sc_status status, void *pdata ) {
+
+	WifiStation.internalSmartConfig(status, pdata );
 }
 
-void StationClass::internalSmartConfig(sc_status status, void *pdata) {
+void StationClass::internalSmartConfig(sc_status status, void *pdata ) {
 
-	if (smartConfigCallback) {
-		smartConfigCallback(status, pdata);
+	if (smartConfigDelegate)
+	{
+		smartConfigDelegate(status, pdata );
 		return;
 	}
 
@@ -395,15 +397,15 @@ void StationClass::internalSmartConfig(sc_status status, void *pdata) {
 	}
 }
 
-void StationClass::smartConfigStart(SmartConfigType sctype, SmartConfigDelegate callback) {
-	smartConfigCallback = callback;
+void StationClass::smartConfigStart(SmartConfigType sctype, SmartConfigDelegate reqDelegate) {
+	smartConfigDelegate = reqDelegate;
 	smartconfig_set_type((sc_type)sctype);
 	smartconfig_start(staticSmartConfigCallback);
 }
 
 void StationClass::smartConfigStop() {
 	smartconfig_stop();
-	smartConfigCallback = NULL;
+	smartConfigDelegate = NULL;
 }
 
 ////////////

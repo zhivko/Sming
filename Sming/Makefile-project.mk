@@ -13,18 +13,18 @@
 COM_SPEED ?= 115200
 
 # Default COM port speed (used for flashing)
-COM_SPEED_ESPTOOL ?= $(COM_SPEED)
+COM_SPEED_ESPTOOL ?= 921600 ## $(COM_SPEED)
 
 # Default COM port speed (used in code)
 COM_SPEED_SERIAL  ?= $(COM_SPEED)
 
 ## Flash parameters
 # SPI_SPEED = 40, 26, 20, 80
-SPI_SPEED ?= 40
+SPI_SPEED ?= 80
 # SPI_MODE: qio, qout, dio, dout
-SPI_MODE ?= qio
+SPI_MODE ?= dio
 # SPI_SIZE: 512K, 256K, 1M, 2M, 4M
-SPI_SIZE ?= 512K
+SPI_SIZE ?= 4M
 
 # Path to spiffy
 SPIFFY ?= $(SMING_HOME)/spiffy/spiffy
@@ -55,7 +55,7 @@ ESPTOOL2_SDK_ARGS	?= -quiet -lib
 
 ## COM port parameter is reqruied to flash firmware correctly.
 ## Windows: 
-# COM_PORT = COM3
+COM_PORT ?= COM59
 
 # MacOS / Linux:
 # COM_PORT = /dev/tty.usbserial
@@ -185,6 +185,8 @@ else
 	flashimageoptions += -fm qio
 endif
 
+$(warning  SPI_SIZE is $(SPI_SIZE))
+
 # flash larger than 1024KB only use 1024KB to storage user1.bin and user2.bin
 ifeq ($(SPI_SIZE), 256K)
 	flashimageoptions += -fs 2m
@@ -196,7 +198,7 @@ else ifeq ($(SPI_SIZE), 2M)
 	flashimageoptions += -fs 16m
 	SPIFF_SIZE ?= 524288  #512K
 else ifeq ($(SPI_SIZE), 4M)
-	flashimageoptions += -fs 32m
+	lashimageoptions += -fs 32m
 	SPIFF_SIZE ?= 524288  #512K
 else
 	flashimageoptions += -fs 4m

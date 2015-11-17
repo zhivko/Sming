@@ -21,6 +21,7 @@
 #include "m_printf.h"
 
 #define __ESP8266_EX__ // System definition ESP8266 SOC
+#define ESP8266 // System definition ESP8266 SOC for Arduino compatibility
 
 #define IRAM_ATTR __attribute__((section(".iram.text")))
 #define __forceinline __attribute__((always_inline)) inline
