@@ -3,12 +3,6 @@
 
 #include <Adafruit_NeoPixel/Adafruit_NeoPixel.h>
 
-
-#ifndef WIFI_SSID
-	#define WIFI_SSID "XXX" 			// Put you SSID and Password here
-	#define WIFI_PWD "XXX"
-#endif
-
 // Which pin on the Esp8266 is connected to the NeoPixels?
 #define PIN            15
 
@@ -17,189 +11,140 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-void StartDemo(void);
-
-Timer StripDemoTimer;
-Timer ColorWipeTimer;
-Timer TheaterChaseTimer;
-
-int StripDemoType = 0;
-int StripColor =0;
-int StripNo=0;
-int ChaseCycle=0;
-int TheaterChaseQ=0;
-
-
-//
 // Fill the dots one after the other with a color
-//
-
-void ColorWipe() {
-
-	if (StripNo < strip.numPixels())
-	{
-		strip.setPixelColor(StripNo, StripColor);
-		strip.show();
-		StripNo++;
-	}
-	else
-	{
-		StripDemoType++;         // next demo type
-		ColorWipeTimer.stop();   // stop this demo timer
-		StripDemoTimer.initializeMs(2000, StartDemo).start(true);  // start next demo after 2 seconds
-	}
-
-}
-
-
-//
-//Theatre-style crawling lights.
-//Timer callback
-
-void TheaterChase() {
-   int i,b=0;
-   if (ChaseCycle > 0)
-   {
-  
-	       if (TheaterChaseQ == 0) b=3;
-	       if (TheaterChaseQ == 1) b=0;
-	       if (TheaterChaseQ == 2) b=1;
-	       if (TheaterChaseQ == 3) b=2;
-	       
-	   	   for (i=0; i < strip.numPixels(); i=i+4)
-             strip.setPixelColor(i+b, 0);        //turn prev every third pixel off
-	   	   
-	   	   	for (i=0; i < strip.numPixels(); i=i+4)
-               strip.setPixelColor(i+TheaterChaseQ, StripColor);    //turn every third pixel on
-	   	   	
-	   	   	strip.show();
-	   	   	TheaterChaseQ++;
-	   	   	if (TheaterChaseQ > 3)
-	   	   	{
-	   	   		TheaterChaseQ=0;
-	   	   		ChaseCycle--;
-	   	   	}
-   }
-   else
-   {
-	   // finish this demo
-		StripDemoType++;         // next demo type
-		TheaterChaseTimer.stop();   // stop this demo dimer
-		StripDemoTimer.initializeMs(2000, StartDemo).start(true);  // start another demo after 2 seconds
-   }	   
-} 
-
-
-
-
-//
-// Demo timer callback
-//
-
-void StartDemo() {
-
-	Serial.print("NeoPixel Demo type: ");
-	Serial.println(StripDemoType);
-
-	StripDemoTimer.stop();			 // next demo wait until this demo ends
-
-
-
-   	StripNo = 0;   //start from led index 0
-   	TheaterChaseQ =0; //another counter
-
-	switch(StripDemoType){           // select demo type
-    case 0:
-    	    StripColor = strip.Color(0, 0, 0);	// black
-    	   	ColorWipeTimer.initializeMs(50, ColorWipe).start(true);   // 50 ms step
-    	   	break;
-    case 1:
-    		StripColor = strip.Color(255, 0, 0);	// Red
-    		ColorWipeTimer.initializeMs(50, ColorWipe).start(true);   // 50 ms step
-    		break;
-    case 2:
-		StripColor = strip.Color(0, 255, 0);	// Green
-		ColorWipeTimer.initializeMs(100, ColorWipe).start(true);   // 100 ms step
-            break;
-    case 3:
-		StripColor = strip.Color(0,0, 255);	// Blue
-		ColorWipeTimer.initializeMs(150, ColorWipe).start(true);   // 150 ms step
-            break;
-    case 4:
-    	    StripColor = strip.Color(0, 0, 0);	// black
-    	   	ColorWipeTimer.initializeMs(50, ColorWipe).start(true);   // 50 ms step
-    	   	break;
-
-    case 5:
-    	    ChaseCycle=10;	//do 10 cycles of chasing
-		StripColor = strip.Color(127,127, 127);	// White
-		TheaterChaseTimer.initializeMs(50, TheaterChase).start(true);   // 50 ms step
-            break;
-    case 6:
-    	    ChaseCycle=15; //do 15 cycles of chasing
-			StripColor = strip.Color(127,0,0);	// Red
-			TheaterChaseTimer.initializeMs(60, TheaterChase).start(true);   // 60 ms step
-            break;
-    case 7:
-   	        ChaseCycle=20; //do 20 cycles of chasing
-			StripColor = strip.Color(0 , 0, 127);	// Blue
-			TheaterChaseTimer.initializeMs(70, TheaterChase).start(true);   // 70 ms step
-            break;
-
-    default:
-    	    StripDemoType=0;
-    	    StripDemoTimer.initializeMs(1000, StartDemo).start(true);  //demo loop restart
-    	    break;
-
+void colorWipe(uint32_t c, uint8_t wait) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+      strip.show();
+      delay(50);
+      WDT.alive();
   }
 
 }
 
-
-
-// Will be called when WiFi station was connected to AP
-void connect_Ok()
-{
-	Serial.print("I'm CONNECTED - ");
-	Serial.println(WifiStation.getIP().toString());
-
-	//You can put here other job like web,tcp etc.
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
-// Will be called when WiFi station timeout was reached
-void connect_Fail()
-{
-	Serial.println("I'm NOT CONNECTED!");
-	WifiStation.waitConnection(connect_Ok, 10, connect_Fail); // Repeat and check again
+
+
+void rainbow(uint8_t wait) {
+  uint16_t i, j;
+
+  for(j=0; j<256; j++) {
+    for(i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, Wheel((i+j) & 255));
+    }
+    strip.show();
+    WDT.alive();
+    delay(wait);
+  }
 }
+
+// Slightly different, this makes the rainbow equally distributed throughout
+void rainbowCycle(uint8_t wait) {
+  uint16_t i, j;
+
+  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
+    for(i=0; i< strip.numPixels(); i++) {
+      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+    }
+    strip.show();
+    delay(wait);
+    WDT.alive();
+  }
+}
+
+//Theatre-style crawling lights.
+void theaterChase(uint32_t c, uint8_t wait) {
+  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, c);    //turn every third pixel on
+      }
+      strip.show();
+
+      delay(wait);
+      WDT.alive();
+
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
+//Theatre-style crawling lights with rainbow effect
+void theaterChaseRainbow(uint8_t wait) {
+  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
+      }
+      strip.show();
+
+      WDT.alive();
+      delay(wait);
+
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
+void startShow(int i) {
+  switch(i){
+    case 0: colorWipe(strip.Color(0, 0, 0), 50);    // Black/off
+            break;
+    case 1: colorWipe(strip.Color(255, 0, 0), 50);  // Red
+            break;
+    case 2: colorWipe(strip.Color(0, 255, 0), 50);  // Green
+            break;
+    case 3: colorWipe(strip.Color(0, 0, 255), 50);  // Blue
+            break;
+    case 4: theaterChase(strip.Color(127, 127, 127), 50); // White
+            break;
+    case 5: theaterChase(strip.Color(127,   0,   0), 50); // Red
+            break;
+    case 6: theaterChase(strip.Color(  0,   0, 127), 50); // Blue
+            break;
+    case 7: rainbow(20);
+            break;
+    case 8: rainbowCycle(20);
+            break;
+    case 9: theaterChaseRainbow(50);
+            break;
+  }
+}
+
 
 void init()
 {
 
-	Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
-	Serial.systemDebugOutput(false); // Disable debug output to serial
-
-	Serial.print("NeoPixel demo .. start");
-
-
-    // Wifi could be used eg. for switching Neopixel from internet
-	// could be also dissabled if no needed
-
-	WifiStation.config(WIFI_SSID, WIFI_PWD);
+	// WIFI not needed for demo. So disabling WIFI.
 	WifiStation.enable(true);
-	WifiAccessPoint.enable(false);
-	WifiStation.waitConnection(connect_Ok, 20, connect_Fail);
+	WifiAccessPoint.enable(true);
 
+	int demo =0;//demo index to be displayed
 
-
-	StripDemoType =0;  //demo index to be displayed
-
-	strip.begin();  //init port
-
-	StripDemoTimer.initializeMs(1000, StartDemo).start();  //start demo
-
+	strip.begin();
+	while(true){
+	  startShow(demo);
+	  demo<10?demo++:demo=0;
+	  delay(1000);
+	  WDT.alive();
+	}
 
 }
-
-
-
