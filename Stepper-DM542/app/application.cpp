@@ -14,8 +14,6 @@
 Timer procTimer;
 Timer reportTimer;
 
-Hardware_Timer hardwareTimer;
-
 #define UPDATE_PIN 0 // GPIO0
 HttpFirmwareUpdate airUpdater;
 
@@ -59,6 +57,8 @@ void OtaUpdate_CallBack(bool result)
 
 void OtaUpdate()
 {
+
+	hardwareTimer.stop();
 
 	uint8 slot;
 	rboot_config bootconf;
@@ -180,29 +180,6 @@ void wsConnected(WebSocket& socket)
 	 */
 }
 
-void blink1()
-{
-	for (int i = 0; i < 4; i++)
-	{
-		if (curPos[i] != nextPos[i])
-		{
-			int8_t sign = -1;
-			if (nextPos[i] > curPos[i])
-				sign = 1;
-			if (sign > 0)
-				digitalWrite(dir[i], false);
-			else
-				digitalWrite(dir[i], true);
-			delayMicroseconds(3);
-
-			digitalWrite(step[i], false);
-			delayMicroseconds(5);
-			digitalWrite(step[i], true);
-			curPos[i] = curPos[i] + sign;
-		}
-	}
-	reportPosition();
-}
 
 void wsMessageReceived(WebSocket& socket, const String& message)
 {
@@ -210,6 +187,7 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 	//char buf[2];
 	//sprintf(buf, "OK");
 	//socket.sendString(buf);
+	hardwareTimer.stop();
 
 	String commandLine;
 	commandLine = message.c_str();
@@ -217,7 +195,6 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 	if (commandLine.equals("flash"))
 	{
 		server.enableWebSockets(false);
-		procTimer.stop();
 		OtaUpdate();
 		return;
 	}
@@ -251,7 +228,6 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 		else if (motor == "T")
 		{
 			deltat = atoi(posStr.c_str());
-			procTimer.initializeUs(deltat, blink1).restart();
 		}
 		if (index > -1)
 		{
@@ -264,6 +240,8 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 			Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
 		}
 	}
+	hardwareTimer.setIntervalUs(deltat);
+	hardwareTimer.startOnce();
 }
 
 void wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
@@ -278,6 +256,7 @@ void wsDisconnected(WebSocket& socket)
 
 void initPins()
 {
+	Serial.println("Init pins");
 	//---------------------
 	step[0] = 2;  //2
 	dir[0] = 0;   //0
@@ -309,12 +288,6 @@ void startWebServer()
 	system_soft_wdt_feed();
 	detachInterrupt(UPDATE_PIN);
 	Serial.println("Starting web server...Phase1");
-
-	initPins();
-
-	system_soft_wdt_feed();
-
-	Serial.println("Starting web server...Phase2");
 	server.listen(80);
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
@@ -340,15 +313,6 @@ void connectOk()
 	Serial.println("IP: ");
 	Serial.println(WifiStation.getIP().toString());
 
-	/*
-	 airUpdater.addItem(0x0000, "http://192.168.1.23/0x00000.bin");
-	 airUpdater.addItem(0x9000, "http://192.168.1.23/0x09000.bin");
-	 */
-	/*Serial.println("You have 5 sec to press program button for air update.");
-	attachInterrupt(UPDATE_PIN, interruptHandler, CHANGE);
-	procTimer.initializeMs(5000, startWebServer).startOnce();
-*/
-	system_soft_wdt_feed();
 	startWebServer();
 }
 
@@ -428,12 +392,11 @@ void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCh
 			ShowInfo();
 		} else if (!strcmp(str, "move")) {
 			Serial.println();
-			initPins();
 			nextPos[0]+=10000;
 			nextPos[1]+=10000;
 			nextPos[2]+=10000;
 			nextPos[3]+=10000;
-			procTimer.initializeUs(deltat, blink1).start(true);
+			//procTimer.initializeUs(deltat, blink1).start(true);
 		} else if (!strcmp(str, "help")) {
 			Serial.println();
 			Serial.println("available commands:");
@@ -453,6 +416,34 @@ void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCh
 			Serial.println("unknown command");
 		}
 	}
+}
+
+
+void IRAM_ATTR ServoTimerInt()
+{
+	//assert(started);
+	for (int i = 0; i < 4; i++)
+	{
+		if (curPos[i] != nextPos[i])
+		{
+			int8_t sign = -1;
+			if (nextPos[i] > curPos[i])
+				sign = 1;
+			if (sign > 0)
+				digitalWrite(dir[i], false);
+			else
+				digitalWrite(dir[i], true);
+			delayMicroseconds(3);
+
+			digitalWrite(step[i], false);
+			delayMicroseconds(5);
+			digitalWrite(step[i], true);
+			curPos[i] = curPos[i] + sign;
+		}
+	}
+	reportPosition();
+	hardwareTimer.setIntervalUs(deltat);
+	hardwareTimer.startOnce();
 }
 
 void init()
@@ -491,16 +482,16 @@ void init()
 #else
 	debugf("spiffs disabled");
 #endif
-
 	ShowInfo();
 
+	initPins();
+
 	WifiAccessPoint.enable(false);
-	//WifiStation.config(WIFI_SSID, WIFI_PWD);
-	WifiStation.enable(false);
+	WifiStation.config(WIFI_SSID, WIFI_PWD);
+	WifiStation.enable(true);
 
-	//WifiStation.waitConnection(connectOk);
-	//procTimer.initializeUs(deltat, blink1).start(true);
 
+	WifiStation.waitConnection(connectOk);
 
 	Serial.println("Init ended.");
 	Serial.println("Type 'help' and press enter for instructions.");
