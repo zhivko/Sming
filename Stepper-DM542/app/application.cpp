@@ -3,6 +3,7 @@
 #include <Wiring/SplitString.h>
 #include <rboot/rboot.h>
 #include <rboot/appcode/rboot-api.h>
+#include <HardwareTimer.h>
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
@@ -13,6 +14,8 @@
 Timer procTimer;
 Timer reportTimer;
 
+Hardware_Timer hardwareTimer;
+
 #define UPDATE_PIN 0 // GPIO0
 HttpFirmwareUpdate airUpdater;
 
@@ -22,69 +25,87 @@ long nextPos[4];
 long curPos[4];
 uint8_t step[4];
 uint8_t dir[4];
-uint32_t deltat = 1000;
+uint32_t deltat = 2000;
 String lastPositionMessage = "";
 
 rBootHttpUpdate* otaUpdater = 0;
 
-String ROM_0_URL= "http://192.168.1.24/rom0.bin";
-String SPIFFS_URL= "http://192.168.1.24/spiff_rom.bin";
+String ROM_0_URL = "http://192.168.1.24/rom0.bin";
+String SPIFFS_URL = "http://192.168.1.24/spiff_rom.bin";
 
 
-void OtaUpdate_CallBack(bool result) {
-    if (result == true) {
-        // success
-        uint8 slot;
-        slot = rboot_get_current_rom();
-        if (slot == 0) slot = 1; else slot = 0;
-        // set to boot new rom and then reboot
-        Serial.printf("Firmware updated, rebooting to rom %d...\r\n", slot);
-        rboot_set_current_rom(slot);
-        System.restart();
-    } else {
-        // fail
-        Serial.println("Firmware update failed!");
-    }
+void OtaUpdate_CallBack(bool result)
+{
+	if (result == true)
+	{
+		// success
+		uint8 slot;
+		slot = rboot_get_current_rom();
+		if (slot == 0)
+			slot = 1;
+		else
+			slot = 0;
+		// set to boot new rom and then reboot
+		Serial.printf("Firmware updated, rebooting to rom %d...\r\n", slot);
+		rboot_set_current_rom(slot);
+		System.restart();
+	}
+	else
+	{
+		// fail
+		Serial.println("Firmware update failed!");
+	}
 }
 
-void OtaUpdate() {
+void OtaUpdate()
+{
 
-    uint8 slot;
-    rboot_config bootconf;
+	uint8 slot;
+	rboot_config bootconf;
 
-    // need a clean object, otherwise if run before and failed will not run again
-    if (otaUpdater) delete otaUpdater;
-    otaUpdater = new rBootHttpUpdate();
+	// need a clean object, otherwise if run before and failed will not run again
+	if (otaUpdater)
+		delete otaUpdater;
+	otaUpdater = new rBootHttpUpdate();
 
-    // select rom slot to flash
-    bootconf = rboot_get_config();
-    slot = bootconf.current_rom;
-    if (slot == 0) slot = 1; else slot = 0;
+	// select rom slot to flash
+	bootconf = rboot_get_config();
+	slot = bootconf.current_rom;
+	if (slot == 0)
+		slot = 1;
+	else
+		slot = 0;
 
 #ifndef RBOOT_TWO_ROMS
-    // flash rom to position indicated in the rBoot config rom table
-    otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
+	// flash rom to position indicated in the rBoot config rom table
+	otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
 #else
-    // flash appropriate rom
-    if (slot == 0) {
-        otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
-    } else {
-        otaUpdater->addItem(bootconf.roms[slot], ROM_1_URL);
-    }
+	// flash appropriate rom
+	if (slot == 0)
+	{
+		otaUpdater->addItem(bootconf.roms[slot], ROM_0_URL);
+	}
+	else
+	{
+		otaUpdater->addItem(bootconf.roms[slot], ROM_1_URL);
+	}
 #endif
 
-    // use user supplied values (defaults for 4mb flash in makefile)
-    if (slot == 0) {
-        otaUpdater->addItem(RBOOT_SPIFFS_0, SPIFFS_URL);
-    } else {
-        otaUpdater->addItem(RBOOT_SPIFFS_1, SPIFFS_URL);
-    }
+	// use user supplied values (defaults for 4mb flash in makefile)
+	if (slot == 0)
+	{
+		otaUpdater->addItem(RBOOT_SPIFFS_0, SPIFFS_URL);
+	}
+	else
+	{
+		otaUpdater->addItem(RBOOT_SPIFFS_1, SPIFFS_URL);
+	}
 
-    // set a callback
-    otaUpdater->setCallback(OtaUpdate_CallBack);
+	// set a callback
+	otaUpdater->setCallback(OtaUpdate_CallBack);
 
-    // start update
-    otaUpdater->start();
+	// start update
+	otaUpdater->start();
 }
 
 void IRAM_ATTR interruptHandler()
@@ -146,22 +167,21 @@ void reportPosition()
 void wsConnected(WebSocket& socket)
 {
 	totalActiveSockets++;
-	lastPositionMessage="";
+	lastPositionMessage = "";
 	reportPosition();
 	// Notify everybody about new connection
 	/*
-	WebSocketsList &clients = server.getActiveWebSockets();
-	for (int i = 0; i < clients.count(); i++)
-	{
-		clients[i].sendString(
-				"New friend arrived! Total: " + String(totalActiveSockets));
-	}
-	*/
+	 WebSocketsList &clients = server.getActiveWebSockets();
+	 for (int i = 0; i < clients.count(); i++)
+	 {
+	 clients[i].sendString(
+	 "New friend arrived! Total: " + String(totalActiveSockets));
+	 }
+	 */
 }
 
 void blink1()
 {
-	system_soft_wdt_feed();
 	for (int i = 0; i < 4; i++)
 	{
 		if (curPos[i] != nextPos[i])
@@ -182,7 +202,6 @@ void blink1()
 		}
 	}
 	reportPosition();
-	system_soft_wdt_feed();
 }
 
 void wsMessageReceived(WebSocket& socket, const String& message)
@@ -195,14 +214,13 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 	String commandLine;
 	commandLine = message.c_str();
 
-	if(commandLine.equals("flash"))
+	if (commandLine.equals("flash"))
 	{
 		server.enableWebSockets(false);
 		procTimer.stop();
 		OtaUpdate();
 		return;
 	}
-
 
 	Vector<String> commandToken;
 	int numToken = splitString(commandLine, ' ', commandToken);
@@ -258,14 +276,8 @@ void wsDisconnected(WebSocket& socket)
 	totalActiveSockets--;
 }
 
-
-
-void startWebServer()
+void initPins()
 {
-	system_soft_wdt_feed();
-	detachInterrupt(UPDATE_PIN);
-	Serial.println("Starting web server...Phase1");
-
 	//---------------------
 	step[0] = 2;  //2
 	dir[0] = 0;   //0
@@ -276,8 +288,8 @@ void startWebServer()
 	step[2] = 13;
 	dir[2] = 12;
 
-	step[3] = 14;
-	dir[3] = 16;
+	step[3] = 16;
+	dir[3] = 14;
 	//---------------------
 	system_soft_wdt_feed();
 
@@ -290,6 +302,16 @@ void startWebServer()
 		curPos[i] = 0;
 		nextPos[i] = 0;
 	}
+}
+
+void startWebServer()
+{
+	system_soft_wdt_feed();
+	detachInterrupt(UPDATE_PIN);
+	Serial.println("Starting web server...Phase1");
+
+	initPins();
+
 	system_soft_wdt_feed();
 
 	Serial.println("Starting web server...Phase2");
@@ -308,8 +330,6 @@ void startWebServer()
 	Serial.println(WifiStation.getIP());
 	Serial.println("==============================\r\n");
 	system_soft_wdt_feed();
-
-	procTimer.initializeUs(deltat, blink1).start(true);
 }
 
 // Will be called when WiFi station was connected to AP
@@ -320,15 +340,16 @@ void connectOk()
 	Serial.println("IP: ");
 	Serial.println(WifiStation.getIP().toString());
 
-/*
-	airUpdater.addItem(0x0000, "http://192.168.1.23/0x00000.bin");
-	airUpdater.addItem(0x9000, "http://192.168.1.23/0x09000.bin");
-*/
-	Serial.println("You have 5 sec to press program button for air update.");
+	/*
+	 airUpdater.addItem(0x0000, "http://192.168.1.23/0x00000.bin");
+	 airUpdater.addItem(0x9000, "http://192.168.1.23/0x09000.bin");
+	 */
+	/*Serial.println("You have 5 sec to press program button for air update.");
 	attachInterrupt(UPDATE_PIN, interruptHandler, CHANGE);
-
-	system_soft_wdt_feed();
 	procTimer.initializeMs(5000, startWebServer).startOnce();
+*/
+	system_soft_wdt_feed();
+	startWebServer();
 }
 
 void couldntConnect()
@@ -336,54 +357,134 @@ void couldntConnect()
 	Serial.println("Couldn't connect");
 }
 
-
-void ShowInfo() {
-    Serial.printf("\r\nSDK: v%s\r\n", system_get_sdk_version());
-    Serial.printf("Free Heap: %d\r\n", system_get_free_heap_size());
-    Serial.printf("CPU Frequency: %d MHz\r\n", system_get_cpu_freq());
-    Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
-    Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
-    //Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+void ShowInfo()
+{
+	Serial.printf("\r\nSDK: v%s\r\n", system_get_sdk_version());
+	Serial.printf("Free Heap: %d\r\n", system_get_free_heap_size());
+	Serial.printf("CPU Frequency: %d MHz\r\n", system_get_cpu_freq());
+	Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
+	Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
+	//Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
 
 	Vector<String> files = fileList();
-	if (files.count() > 0) {
-	    Serial.println("\n\rSpiff files:");
-	    Serial.println("----------------------------");
-		for(int i=0;i<files.count();i++)
+	if (files.count() > 0)
+	{
+		Serial.println("\n\rSpiff files:");
+		Serial.println("----------------------------");
 		{
-			Serial.println(files[i]);
+			for (int i = 0; i < files.count(); i++)
+			{
+				Serial.println(files[i]);
+			}
 		}
-	    Serial.println("----------------------------");
-	} else {
+		Serial.println("----------------------------");
+	}
+	else
+	{
 		Serial.println("Empty spiffs!");
 	}
 
 }
 
+
+void Switch() {
+	uint8 before, after;
+	before = rboot_get_current_rom();
+	if (before == 0) after = 1; else after = 0;
+	Serial.printf("Swapping from rom %d to rom %d.\r\n", before, after);
+	rboot_set_current_rom(after);
+	Serial.println("Restarting...\r\n");
+	System.restart();
+}
+
+void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
+	int ia = (int)arrivedChar;
+	if (ia == 13) {
+		char str[availableCharsCount];
+		for (int i = 0; i < availableCharsCount; i++) {
+			str[i] = stream.read();
+			if (str[i] == '\r' || str[i] == '\n') {
+				str[i] = '\0';
+			}
+		}
+
+		if (!strcmp(str, "connect")) {
+			// connect to wifi
+			WifiStation.config(WIFI_SSID, WIFI_PWD);
+			WifiStation.enable(true);
+		} else if (!strcmp(str, "ip")) {
+			Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(), WifiStation.getMAC().c_str());
+		} else if (!strcmp(str, "ota")) {
+			OtaUpdate();
+		} else if (!strcmp(str, "restart")) {
+			System.restart();
+		} else if (!strcmp(str, "ls")) {
+			Vector<String> files = fileList();
+			Serial.printf("filecount %d\r\n", files.count());
+			for (unsigned int i = 0; i < files.count(); i++) {
+				Serial.println(files[i]);
+			}
+		} else if (!strcmp(str, "info")) {
+			ShowInfo();
+		} else if (!strcmp(str, "move")) {
+			Serial.println();
+			initPins();
+			nextPos[0]+=10000;
+			nextPos[1]+=10000;
+			nextPos[2]+=10000;
+			nextPos[3]+=10000;
+			procTimer.initializeUs(deltat, blink1).start(true);
+		} else if (!strcmp(str, "help")) {
+			Serial.println();
+			Serial.println("available commands:");
+			Serial.println("  help - display this message");
+			Serial.println("  ip - show current ip address");
+			Serial.println("  connect - connect to wifi");
+			Serial.println("  restart - restart the esp8266");
+			Serial.println("  switch - switch to the other rom and reboot");
+			Serial.println("  ota - perform ota update, switch rom and reboot");
+			Serial.println("  info - show esp8266 info");
+#ifndef DISABLE_SPIFFS
+			Serial.println("  ls - list files in spiffs");
+			Serial.println("  cat - show first file in spiffs");
+#endif
+			Serial.println();
+		} else {
+			Serial.println("unknown command");
+		}
+	}
+}
+
 void init()
 {
+	Serial.begin(SERIAL_BAUD_RATE);
 	Serial.println("Init running...");
 
 	Serial.systemDebugOutput(true);
-	System.setCpuFrequency(eCF_160MHz);
-	system_soft_wdt_stop();
+	//System.setCpuFrequency(eCF_160MHz);
+	//system_soft_wdt_stop();
 
 	int slot = rboot_get_current_rom();
 #ifndef DISABLE_SPIFFS
-	if (slot == 0) {
+	if (slot == 0)
+	{
 #ifdef RBOOT_SPIFFS_0
 		debugf("trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
 		spiffs_mount_manual(RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
 #else
-		debugf("trying to mount spiffs at %x, length %d", 0x40300000, SPIFF_SIZE);
+		debugf("trying to mount spiffs at %x, length %d", 0x40300000,
+				SPIFF_SIZE);
 		spiffs_mount_manual(0x40300000, SPIFF_SIZE);
 #endif
-	} else {
+	}
+	else
+	{
 #ifdef RBOOT_SPIFFS_1
 		debugf("trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
 		spiffs_mount_manual(RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
 #else
-		debugf("trying to mount spiffs at %x, length %d", 0x40500000, SPIFF_SIZE);
+		debugf("trying to mount spiffs at %x, length %d", 0x40500000,
+				SPIFF_SIZE);
 		spiffs_mount_manual(0x40500000, SPIFF_SIZE);
 #endif
 	}
@@ -394,9 +495,19 @@ void init()
 	ShowInfo();
 
 	WifiAccessPoint.enable(false);
-	WifiStation.config(WIFI_SSID, WIFI_PWD);
-	WifiStation.enable(true);
+	//WifiStation.config(WIFI_SSID, WIFI_PWD);
+	WifiStation.enable(false);
 
-	WifiStation.waitConnection(connectOk);
+	//WifiStation.waitConnection(connectOk);
+	//procTimer.initializeUs(deltat, blink1).start(true);
+
+
 	Serial.println("Init ended.");
+	Serial.println("Type 'help' and press enter for instructions.");
+	Serial.println();
+	Serial.setCallback(serialCallBack);
+
+	hardwareTimer.initializeUs(100000,ServoTimerInt);
+	hardwareTimer.startOnce();
+
 }
