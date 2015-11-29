@@ -11,7 +11,6 @@
 #define WIFI_PWD "PleaseEnterPass"
 #endif
 
-Timer procTimer;
 Timer reportTimer;
 
 #define UPDATE_PIN 0 // GPIO0
@@ -31,6 +30,54 @@ rBootHttpUpdate* otaUpdater = 0;
 String ROM_0_URL = "http://192.168.1.24/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.24/spiff_rom.bin";
 
+void reportPosition()
+{
+	// report position only when steppers reached final stage
+	// so movement of steppers is not interrupted ba wifi communication
+	//if (nextPos[0] == curPos[0] && nextPos[1] == curPos[1]
+	//		&& nextPos[2] == curPos[2] && nextPos[3] == curPos[3])
+	//{
+		char buf[30];
+		sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2],
+				curPos[3]);
+		String message = String(buf);
+		if (!message.equals(lastPositionMessage))
+		{
+			WebSocketsList &clients = server.getActiveWebSockets();
+			for (int i = 0; i < clients.count(); i++)
+			{
+				clients[i].sendString(message);
+			}
+			lastPositionMessage = message;
+		}
+	//}
+}
+
+void IRAM_ATTR StepperTimerInt()
+{
+	hardwareTimer.initializeUs(deltat, StepperTimerInt);
+	hardwareTimer.startOnce();
+	for (int i = 0; i < 4; i++)
+	{
+		if (curPos[i] != nextPos[i])
+		{
+			int8_t sign = -1;
+			if (nextPos[i] > curPos[i])
+				sign = 1;
+			if (sign > 0)
+				digitalWrite(dir[i], false);
+			else
+				digitalWrite(dir[i], true);
+			delayMicroseconds(3);
+
+			digitalWrite(step[i], false);
+			delayMicroseconds(5);
+			digitalWrite(step[i], true);
+			curPos[i] = curPos[i] + sign;
+		}
+	}
+	//reportPosition();
+}
 
 void OtaUpdate_CallBack(bool result)
 {
@@ -53,6 +100,49 @@ void OtaUpdate_CallBack(bool result)
 		// fail
 		Serial.println("Firmware update failed!");
 	}
+}
+
+void ShowInfo()
+{
+	Serial.printf("\r\nSDK: v%s\r\n", system_get_sdk_version());
+	Serial.printf("Free Heap: %d\r\n", system_get_free_heap_size());
+	Serial.printf("CPU Frequency: %d MHz\r\n", system_get_cpu_freq());
+	Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
+	Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
+	//Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+
+	Vector<String> files = fileList();
+	if (files.count() > 0)
+	{
+		Serial.println("\n\rSpiff files:");
+		Serial.println("----------------------------");
+		{
+			for (int i = 0; i < files.count(); i++)
+			{
+				Serial.println(files[i]);
+			}
+		}
+		Serial.println("----------------------------");
+	}
+	else
+	{
+		Serial.println("Empty spiffs!");
+	}
+
+}
+
+void Switch()
+{
+	uint8 before, after;
+	before = rboot_get_current_rom();
+	if (before == 0)
+		after = 1;
+	else
+		after = 0;
+	Serial.printf("Swapping from rom %d to rom %d.\r\n", before, after);
+	rboot_set_current_rom(after);
+	Serial.println("Restarting...\r\n");
+	System.restart();
 }
 
 void OtaUpdate()
@@ -108,10 +198,95 @@ void OtaUpdate()
 	otaUpdater->start();
 }
 
+void serialCallBack(Stream& stream, char arrivedChar,
+		unsigned short availableCharsCount)
+{
+	int ia = (int) arrivedChar;
+	if (ia == 13)
+	{
+		char str[availableCharsCount];
+		for (int i = 0; i < availableCharsCount; i++)
+		{
+			str[i] = stream.read();
+			if (str[i] == '\r' || str[i] == '\n')
+			{
+				str[i] = '\0';
+			}
+		}
+
+		if (!strcmp(str, "connect"))
+		{
+			// connect to wifi
+			WifiStation.config(WIFI_SSID, WIFI_PWD);
+			WifiStation.enable(true);
+		}
+		else if (!strcmp(str, "ip"))
+		{
+			Serial.printf("ip: %s mac: %s\r\n",
+					WifiStation.getIP().toString().c_str(),
+					WifiStation.getMAC().c_str());
+		}
+		else if (!strcmp(str, "ota"))
+		{
+			OtaUpdate();
+		}
+		else if (!strcmp(str, "restart"))
+		{
+			System.restart();
+		}
+		else if (!strcmp(str, "ls"))
+		{
+			Vector<String> files = fileList();
+			Serial.printf("filecount %d\r\n", files.count());
+			for (unsigned int i = 0; i < files.count(); i++)
+			{
+				Serial.println(files[i]);
+			}
+		}
+		else if (!strcmp(str, "info"))
+		{
+			ShowInfo();
+		}
+		else if (!strcmp(str, "pos"))
+		{
+			reportPosition();
+		}
+		else if (!strcmp(str, "move"))
+		{
+			Serial.println();
+			nextPos[0] += 10000;
+			nextPos[1] += 10000;
+			nextPos[2] += 10000;
+			nextPos[3] += 10000;
+			//procTimer.initializeUs(deltat, blink1).start(true);
+		}
+		else if (!strcmp(str, "help"))
+		{
+			Serial.println();
+			Serial.println("available commands:");
+			Serial.println("  help - display this message");
+			Serial.println("  ip - show current ip address");
+			Serial.println("  connect - connect to wifi");
+			Serial.println("  restart - restart the esp8266");
+			Serial.println("  switch - switch to the other rom and reboot");
+			Serial.println("  ota - perform ota update, switch rom and reboot");
+			Serial.println("  info - show esp8266 info");
+#ifndef DISABLE_SPIFFS
+			Serial.println("  ls - list files in spiffs");
+			Serial.println("  cat - show first file in spiffs");
+#endif
+			Serial.println();
+		}
+		else
+		{
+			Serial.println("unknown command");
+		}
+	}
+}
+
 void IRAM_ATTR interruptHandler()
 {
 	detachInterrupt(UPDATE_PIN);
-	procTimer.stop();
 	Serial.println("Let's do cloud magic!");
 
 	// Start cloud update
@@ -141,34 +316,10 @@ void onFile(HttpRequest &request, HttpResponse &response)
 	}
 }
 
-void reportPosition()
-{
-	// report position only when steppers reached final stage
-	// so movement of steppers is not interrupted ba wifi communication
-	if (nextPos[0] == curPos[0] && nextPos[1] == curPos[1]
-			&& nextPos[2] == curPos[2] && nextPos[3] == curPos[3])
-	{
-		char buf[30];
-		sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2],
-				curPos[3]);
-		String message = String(buf);
-		if (!message.equals(lastPositionMessage))
-		{
-			WebSocketsList &clients = server.getActiveWebSockets();
-			for (int i = 0; i < clients.count(); i++)
-			{
-				clients[i].sendString(message);
-			}
-			lastPositionMessage = message;
-		}
-	}
-}
-
 void wsConnected(WebSocket& socket)
 {
 	totalActiveSockets++;
 	lastPositionMessage = "";
-	reportPosition();
 	// Notify everybody about new connection
 	/*
 	 WebSocketsList &clients = server.getActiveWebSockets();
@@ -180,15 +331,12 @@ void wsConnected(WebSocket& socket)
 	 */
 }
 
-
 void wsMessageReceived(WebSocket& socket, const String& message)
 {
 	Serial.printf("WebSocket message received: %s\r\n", message.c_str());
 	//char buf[2];
 	//sprintf(buf, "OK");
 	//socket.sendString(buf);
-	hardwareTimer.stop();
-
 	String commandLine;
 	commandLine = message.c_str();
 
@@ -196,6 +344,11 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 	{
 		server.enableWebSockets(false);
 		OtaUpdate();
+		return;
+	}
+	else if (commandLine.equals("pos"))
+	{
+		reportPosition();
 		return;
 	}
 
@@ -240,8 +393,7 @@ void wsMessageReceived(WebSocket& socket, const String& message)
 			Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
 		}
 	}
-	hardwareTimer.setIntervalUs(deltat);
-	hardwareTimer.startOnce();
+
 }
 
 void wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
@@ -314,136 +466,22 @@ void connectOk()
 	Serial.println(WifiStation.getIP().toString());
 
 	startWebServer();
+
+	Serial.println("Init ended.");
+	Serial.println("Type 'help' and press enter for instructions.");
+	Serial.println();
+	Serial.setCallback(serialCallBack);
+
+	reportTimer.initializeMs(1000, reportPosition).start();
+
+	hardwareTimer.initializeUs(deltat, StepperTimerInt);
+	hardwareTimer.startOnce();
+
 }
 
 void couldntConnect()
 {
 	Serial.println("Couldn't connect");
-}
-
-void ShowInfo()
-{
-	Serial.printf("\r\nSDK: v%s\r\n", system_get_sdk_version());
-	Serial.printf("Free Heap: %d\r\n", system_get_free_heap_size());
-	Serial.printf("CPU Frequency: %d MHz\r\n", system_get_cpu_freq());
-	Serial.printf("System Chip ID: %x\r\n", system_get_chip_id());
-	Serial.printf("SPI Flash ID: %x\r\n", spi_flash_get_id());
-	//Serial.printf("SPI Flash Size: %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
-
-	Vector<String> files = fileList();
-	if (files.count() > 0)
-	{
-		Serial.println("\n\rSpiff files:");
-		Serial.println("----------------------------");
-		{
-			for (int i = 0; i < files.count(); i++)
-			{
-				Serial.println(files[i]);
-			}
-		}
-		Serial.println("----------------------------");
-	}
-	else
-	{
-		Serial.println("Empty spiffs!");
-	}
-
-}
-
-
-void Switch() {
-	uint8 before, after;
-	before = rboot_get_current_rom();
-	if (before == 0) after = 1; else after = 0;
-	Serial.printf("Swapping from rom %d to rom %d.\r\n", before, after);
-	rboot_set_current_rom(after);
-	Serial.println("Restarting...\r\n");
-	System.restart();
-}
-
-void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
-	int ia = (int)arrivedChar;
-	if (ia == 13) {
-		char str[availableCharsCount];
-		for (int i = 0; i < availableCharsCount; i++) {
-			str[i] = stream.read();
-			if (str[i] == '\r' || str[i] == '\n') {
-				str[i] = '\0';
-			}
-		}
-
-		if (!strcmp(str, "connect")) {
-			// connect to wifi
-			WifiStation.config(WIFI_SSID, WIFI_PWD);
-			WifiStation.enable(true);
-		} else if (!strcmp(str, "ip")) {
-			Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(), WifiStation.getMAC().c_str());
-		} else if (!strcmp(str, "ota")) {
-			OtaUpdate();
-		} else if (!strcmp(str, "restart")) {
-			System.restart();
-		} else if (!strcmp(str, "ls")) {
-			Vector<String> files = fileList();
-			Serial.printf("filecount %d\r\n", files.count());
-			for (unsigned int i = 0; i < files.count(); i++) {
-				Serial.println(files[i]);
-			}
-		} else if (!strcmp(str, "info")) {
-			ShowInfo();
-		} else if (!strcmp(str, "move")) {
-			Serial.println();
-			nextPos[0]+=10000;
-			nextPos[1]+=10000;
-			nextPos[2]+=10000;
-			nextPos[3]+=10000;
-			//procTimer.initializeUs(deltat, blink1).start(true);
-		} else if (!strcmp(str, "help")) {
-			Serial.println();
-			Serial.println("available commands:");
-			Serial.println("  help - display this message");
-			Serial.println("  ip - show current ip address");
-			Serial.println("  connect - connect to wifi");
-			Serial.println("  restart - restart the esp8266");
-			Serial.println("  switch - switch to the other rom and reboot");
-			Serial.println("  ota - perform ota update, switch rom and reboot");
-			Serial.println("  info - show esp8266 info");
-#ifndef DISABLE_SPIFFS
-			Serial.println("  ls - list files in spiffs");
-			Serial.println("  cat - show first file in spiffs");
-#endif
-			Serial.println();
-		} else {
-			Serial.println("unknown command");
-		}
-	}
-}
-
-
-void IRAM_ATTR ServoTimerInt()
-{
-	//assert(started);
-	for (int i = 0; i < 4; i++)
-	{
-		if (curPos[i] != nextPos[i])
-		{
-			int8_t sign = -1;
-			if (nextPos[i] > curPos[i])
-				sign = 1;
-			if (sign > 0)
-				digitalWrite(dir[i], false);
-			else
-				digitalWrite(dir[i], true);
-			delayMicroseconds(3);
-
-			digitalWrite(step[i], false);
-			delayMicroseconds(5);
-			digitalWrite(step[i], true);
-			curPos[i] = curPos[i] + sign;
-		}
-	}
-	reportPosition();
-	hardwareTimer.setIntervalUs(deltat);
-	hardwareTimer.startOnce();
 }
 
 void init()
@@ -452,7 +490,7 @@ void init()
 	Serial.println("Init running...");
 
 	Serial.systemDebugOutput(true);
-	//System.setCpuFrequency(eCF_160MHz);
+	System.setCpuFrequency(eCF_160MHz);
 	//system_soft_wdt_stop();
 
 	int slot = rboot_get_current_rom();
@@ -490,15 +528,6 @@ void init()
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
 	WifiStation.enable(true);
 
-
 	WifiStation.waitConnection(connectOk);
-
-	Serial.println("Init ended.");
-	Serial.println("Type 'help' and press enter for instructions.");
-	Serial.println();
-	Serial.setCallback(serialCallBack);
-
-	hardwareTimer.initializeUs(100000,ServoTimerInt);
-	hardwareTimer.startOnce();
 
 }
