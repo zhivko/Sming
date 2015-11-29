@@ -21,7 +21,8 @@
 #include "FileSystem.h"
 #include "HardwareSerial.h"
 #include "Interrupts.h"
-#include "PWM.h"
+#include "DriverPWM.h"
+#include "HardwarePWM.h"
 #include "Timer.h"
 #include "Wire.h"
 #include "SPISoft.h"
@@ -46,7 +47,7 @@
 #include "Network/rBootHttpUpdate.h"
 #include "Network/URL.h"
 
-#include "../Services/ArduinoJson/ArduinoJson.h"
+#include "../Services/ArduinoJson/include/ArduinoJson.h"
 #include "../Services/DateTime/DateTime.h"
 #include "../Services/libemqtt/libemqtt.h"
 #include "../Services/FATFS/ff.h"
