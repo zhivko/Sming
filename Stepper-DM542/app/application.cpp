@@ -54,8 +54,11 @@ void reportPosition()
 
 void IRAM_ATTR StepperTimerInt()
 {
-	hardwareTimer.initializeUs(deltat, StepperTimerInt);
+	hardwareTimer.initializeMs(deltat, StepperTimerInt);
 	hardwareTimer.startOnce();
+
+/*
+
 	for (int i = 0; i < 4; i++)
 	{
 		if (curPos[i] != nextPos[i])
@@ -71,10 +74,41 @@ void IRAM_ATTR StepperTimerInt()
 			digitalWrite(step[i], false);
 			os_delay_us(5);
 			digitalWrite(step[i], true);
-			curPos[i] = curPos[i] + sign;
+			curPos[i] += sign;
 		}
 	}
+*/
 
+	uint32_t pin_mask_steppers = 0;
+	//set direction pins
+	for (int i = 0; i < 4; i++)
+	{
+		if (curPos[i] != nextPos[i])
+		{
+			int8_t sign = -1;
+			if (nextPos[i] > curPos[i])
+				sign = 1;
+			if (sign > 0)
+				digitalWrite(dir[i], false);
+			else
+				digitalWrite(dir[i], true);
+			curPos[i] = curPos[i] + sign;
+			pin_mask_steppers = pin_mask_steppers | (1<<step[i]);
+		}
+	}
+	delayMicroseconds(3);
+
+	//prepare symultaneous step mask
+	// taken from Robotiko@Sming
+	// uint32_t pin_mask_leftright=| (1<<stepPinRightMotor);
+
+	//Serial.println(pin_mask_steppers);
+	pin_mask_steppers = 0x00010000;
+
+	GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
+	delayMicroseconds(5);
+	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers);   // Set pin a and b low
+	delayMicroseconds(5);
 }
 
 void OtaUpdate_CallBack(bool result)
@@ -198,7 +232,7 @@ void OtaUpdate()
 
 void parseGcode(String commandLine)
 {
-	if (commandLine.equals("flash"))
+	if (commandLine.equals("ota"))
 	{
 		//server.enableWebSockets(false);
 		OtaUpdate();
@@ -341,6 +375,7 @@ void serialCallBack(Stream& stream, char arrivedChar,
 	else if (ia == 48)
 	{
 		Serial.println();
+		stream.read();
 		nextPos[0] += 100;
 		nextPos[1] += 100;
 		nextPos[2] += 100;
@@ -350,6 +385,7 @@ void serialCallBack(Stream& stream, char arrivedChar,
 	else if (ia == 49)
 	{
 		Serial.println();
+		stream.read();
 		nextPos[0] -= 100;
 		nextPos[1] -= 100;
 		nextPos[2] -= 100;
@@ -425,6 +461,7 @@ void wsDisconnected(WebSocket& socket)
 void initPins()
 {
 	Serial.println("Init pins");
+
 	//---------------------
 	step[0] = 2;  //2
 	dir[0] = 0;   //0
@@ -438,7 +475,7 @@ void initPins()
 	step[3] = 16;
 	dir[3] = 14;
 	//---------------------
-	system_soft_wdt_feed();
+	//system_soft_wdt_feed();
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -488,9 +525,11 @@ void connectOk()
 	Serial.println();
 	Serial.setCallback(serialCallBack);
 
+	initPins();
+
 	reportTimer.initializeMs(1000, reportPosition).start();
 
-	hardwareTimer.initializeUs(deltat, StepperTimerInt);
+	hardwareTimer.initializeMs(deltat, StepperTimerInt);
 	hardwareTimer.startOnce();
 
 }
@@ -541,8 +580,6 @@ void init()
 	debugf("spiffs disabled");
 #endif
 	ShowInfo();
-
-	initPins();
 
 	WifiAccessPoint.enable(false);
 	WifiStation.config(WIFI_SSID, WIFI_PWD);

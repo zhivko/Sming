@@ -114,9 +114,15 @@
 		if (translate=='translate')
 		{
 			if (coord == 'X' || coord == 'Y')
-				var command = "X" + sign + value + " Y" + sign + value;
+				if(sign=="-")
+					var command = "X" + sign + value + " Y" + sign + value;
+				else
+					var command = "Y" + sign + value + " X" + sign + value;
 			else
-				var command = "Z" + sign + value + " E" + sign + value;
+				if(sign=="-")
+					var command = "E" + sign + value + " Z" + sign + value;
+				else
+					var command = "Z" + sign + value + " E" + sign + value;				
 		}
 		else
 		{

@@ -4,6 +4,7 @@
 
 #Add your source directories here separated by space
 MODULES = app
+EXTRA_LIBS = crypto wpa
 
 ## ESP_HOME sets the path where ESP tools and SDK are located.
 ## Windows:
