@@ -37,19 +37,18 @@ void reportPosition()
 	//if (nextPos[0] == curPos[0] && nextPos[1] == curPos[1]
 	//		&& nextPos[2] == curPos[2] && nextPos[3] == curPos[3])
 	//{
-		char buf[30];
-		sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2],
-				curPos[3]);
-		String message = String(buf);
-		if (!message.equals(lastPositionMessage))
+	char buf[30];
+	sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2], curPos[3]);
+	String message = String(buf);
+	if (!message.equals(lastPositionMessage))
+	{
+		WebSocketsList &clients = server.getActiveWebSockets();
+		for (int i = 0; i < clients.count(); i++)
 		{
-			WebSocketsList &clients = server.getActiveWebSockets();
-			for (int i = 0; i < clients.count(); i++)
-			{
-				clients[i].sendString(message);
-			}
-			lastPositionMessage = message;
+			clients[i].sendString(message);
 		}
+		lastPositionMessage = message;
+	}
 	//}
 }
 
@@ -68,15 +67,14 @@ void IRAM_ATTR StepperTimerInt()
 				digitalWrite(dir[i], false);
 			else
 				digitalWrite(dir[i], true);
-			delayMicroseconds(3);
-
+			os_delay_us(3);
 			digitalWrite(step[i], false);
-			delayMicroseconds(5);
+			os_delay_us(5);
 			digitalWrite(step[i], true);
 			curPos[i] = curPos[i] + sign;
 		}
 	}
-	//reportPosition();
+
 }
 
 void OtaUpdate_CallBack(bool result)
@@ -198,6 +196,63 @@ void OtaUpdate()
 	otaUpdater->start();
 }
 
+void parseGcode(String commandLine)
+{
+	if (commandLine.equals("flash"))
+	{
+		//server.enableWebSockets(false);
+		OtaUpdate();
+		return;
+	}
+	else if (commandLine.equals("pos"))
+	{
+		reportPosition();
+		return;
+	}
+
+	Vector<String> commandToken;
+	int numToken = splitString(commandLine, ' ', commandToken);
+	for (int i = 0; i < numToken; i++)
+	{
+		Serial.printf("Command: %s\r\n", commandToken[i].c_str());
+		String motor = commandToken[i].substring(0, 1);
+		String sign = commandToken[i].substring(1, 2);
+		String posStr = "";
+		if (sign == "+" || sign == "-")
+		{
+			posStr = commandToken[i].substring(2, commandToken[i].length());
+		}
+		else
+		{
+			sign = "";
+			posStr = commandToken[i].substring(1, commandToken[i].length());
+		}
+		int8_t index = -1;
+		if (motor == "X")
+			index = 0;
+		else if (motor == "Y")
+			index = 1;
+		else if (motor == "Z")
+			index = 2;
+		else if (motor == "E")
+			index = 3;
+		else if (motor == "T")
+		{
+			deltat = atoi(posStr.c_str());
+		}
+		if (index > -1)
+		{
+			if (sign == "+")
+				nextPos[index] = nextPos[index] + atol(posStr.c_str());
+			else if (sign == "-")
+				nextPos[index] = nextPos[index] - atol(posStr.c_str());
+			else
+				nextPos[index] = atol(posStr.c_str());
+			Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
+		}
+	}
+}
+
 void serialCallBack(Stream& stream, char arrivedChar,
 		unsigned short availableCharsCount)
 {
@@ -279,8 +334,27 @@ void serialCallBack(Stream& stream, char arrivedChar,
 		}
 		else
 		{
-			Serial.println("unknown command");
+			Serial.println("Trying to parse as gCode...");
+			parseGcode(str);
 		}
+	}
+	else if (ia == 48)
+	{
+		Serial.println();
+		nextPos[0] += 100;
+		nextPos[1] += 100;
+		nextPos[2] += 100;
+		nextPos[3] += 100;
+		//procTimer.initializeUs(deltat, blink1).start(true);
+	}
+	else if (ia == 49)
+	{
+		Serial.println();
+		nextPos[0] -= 100;
+		nextPos[1] -= 100;
+		nextPos[2] -= 100;
+		nextPos[3] -= 100;
+		//procTimer.initializeUs(deltat, blink1).start(true);
 	}
 }
 
@@ -334,66 +408,8 @@ void wsConnected(WebSocket& socket)
 void wsMessageReceived(WebSocket& socket, const String& message)
 {
 	Serial.printf("WebSocket message received: %s\r\n", message.c_str());
-	//char buf[2];
-	//sprintf(buf, "OK");
-	//socket.sendString(buf);
-	String commandLine;
-	commandLine = message.c_str();
 
-	if (commandLine.equals("flash"))
-	{
-		server.enableWebSockets(false);
-		OtaUpdate();
-		return;
-	}
-	else if (commandLine.equals("pos"))
-	{
-		reportPosition();
-		return;
-	}
-
-	Vector<String> commandToken;
-	int numToken = splitString(commandLine, ' ', commandToken);
-	for (int i = 0; i < numToken; i++)
-	{
-		Serial.printf("Command: %s\r\n", commandToken[i].c_str());
-		String motor = commandToken[i].substring(0, 1);
-		String sign = commandToken[i].substring(1, 2);
-		String posStr = "";
-		if (sign == "+" || sign == "-")
-		{
-			posStr = commandToken[i].substring(2, commandToken[i].length());
-		}
-		else
-		{
-			sign = "";
-			posStr = commandToken[i].substring(1, commandToken[i].length());
-		}
-		int8_t index = -1;
-		if (motor == "X")
-			index = 0;
-		else if (motor == "Y")
-			index = 1;
-		else if (motor == "Z")
-			index = 2;
-		else if (motor == "E")
-			index = 3;
-		else if (motor == "T")
-		{
-			deltat = atoi(posStr.c_str());
-		}
-		if (index > -1)
-		{
-			if (sign == "+")
-				nextPos[index] = nextPos[index] + atol(posStr.c_str());
-			else if (sign == "-")
-				nextPos[index] = nextPos[index] - atol(posStr.c_str());
-			else
-				nextPos[index] = atol(posStr.c_str());
-			Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
-		}
-	}
-
+	parseGcode(message.c_str());
 }
 
 void wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
@@ -486,8 +502,12 @@ void couldntConnect()
 
 void init()
 {
+	ets_wdt_disable();
+
 	Serial.begin(SERIAL_BAUD_RATE);
-	Serial.println("Init running...");
+	Serial.println("********************");
+	Serial.println("*****Init running***");
+	Serial.println("********************");
 
 	Serial.systemDebugOutput(true);
 	System.setCpuFrequency(eCF_160MHz);
