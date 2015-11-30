@@ -89,6 +89,7 @@ extern "C" {
  */
 #define MQTTParseMessageRetain(buffer) ( *buffer & 0x01 )
 
+
 /** Parse packet buffer for number of bytes in remaining length field.
  *
  * Given a packet, return number of bytes in remaining length

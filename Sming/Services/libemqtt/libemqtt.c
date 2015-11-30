@@ -42,6 +42,7 @@
 #define MQTT_USERNAME_FLAG  1<<7
 #define MQTT_PASSWORD_FLAG  1<<6
 
+
 uint8_t mqtt_num_rem_len_bytes(const uint8_t* buf) {
 	uint8_t num_bytes = 1;
 	
@@ -187,7 +188,7 @@ uint16_t mqtt_parse_pub_msg_ptr(const uint8_t* buf, const uint8_t **msg_ptr) {
 void mqtt_init(mqtt_broker_handle_t* broker, const char* clientid) {
 	// Connection options
 	broker->alive = 300; // 300 seconds = 5 minutes
-	broker->seq = 1; // Sequence for message identifiers
+	broker->seq = 1; // Sequency for message indetifiers
 	// Client options
 	memset(broker->clientid, 0, sizeof(broker->clientid));
 	memset(broker->username, 0, sizeof(broker->username));
@@ -199,6 +200,7 @@ void mqtt_init(mqtt_broker_handle_t* broker, const char* clientid) {
 	} else {
 		strcpy(broker->clientid, "emqtt");
 	}
+	// Will topic
 	broker->clean_session = 1;
 }
 
@@ -533,15 +535,4 @@ int mqtt_unsubscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* 
 	}
 
 	return 1;
-}
-
-void mqtt_free(mqtt_broker_handle_t* broker) {
-	if(broker->will_topic != NULL) {
-		free(broker->will_topic);
-		broker->will_topic = NULL;
-	}
-	if(broker->will_message != NULL) {
-		free(broker->will_message);
-		broker->will_message = NULL;
-	}
 }
