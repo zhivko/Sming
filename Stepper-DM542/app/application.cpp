@@ -54,10 +54,8 @@ void reportPosition()
 
 void IRAM_ATTR StepperTimerInt()
 {
-	hardwareTimer.initializeMs(deltat, StepperTimerInt);
+	hardwareTimer.initializeUs(deltat, StepperTimerInt);
 	hardwareTimer.startOnce();
-
-/*
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -70,15 +68,17 @@ void IRAM_ATTR StepperTimerInt()
 				digitalWrite(dir[i], false);
 			else
 				digitalWrite(dir[i], true);
-			os_delay_us(3);
+			delayMicroseconds(3);
 			digitalWrite(step[i], false);
-			os_delay_us(5);
+			delayMicroseconds(5);
 			digitalWrite(step[i], true);
 			curPos[i] += sign;
 		}
 	}
-*/
 
+
+
+	/*
 	uint32_t pin_mask_steppers = 0;
 	//set direction pins
 	for (int i = 0; i < 4; i++)
@@ -97,18 +97,12 @@ void IRAM_ATTR StepperTimerInt()
 		}
 	}
 	delayMicroseconds(3);
-
-	//prepare symultaneous step mask
-	// taken from Robotiko@Sming
-	// uint32_t pin_mask_leftright=| (1<<stepPinRightMotor);
-
-	//Serial.println(pin_mask_steppers);
-	pin_mask_steppers = 0x00010000;
-
 	GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
 	delayMicroseconds(5);
 	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers);   // Set pin a and b low
 	delayMicroseconds(5);
+
+	*/
 }
 
 void OtaUpdate_CallBack(bool result)
@@ -525,13 +519,10 @@ void connectOk()
 	Serial.println();
 	Serial.setCallback(serialCallBack);
 
-	initPins();
-
 	reportTimer.initializeMs(1000, reportPosition).start();
 
-	hardwareTimer.initializeMs(deltat, StepperTimerInt);
+	hardwareTimer.initializeUs(deltat, StepperTimerInt);
 	hardwareTimer.startOnce();
-
 }
 
 void couldntConnect()
@@ -541,7 +532,7 @@ void couldntConnect()
 
 void init()
 {
-	ets_wdt_disable();
+	//ets_wdt_disable();
 
 	Serial.begin(SERIAL_BAUD_RATE);
 	Serial.println("********************");
@@ -581,10 +572,12 @@ void init()
 #endif
 	ShowInfo();
 
-	WifiAccessPoint.enable(false);
+	initPins();
+
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
 	WifiStation.enable(true);
 
 	WifiStation.waitConnection(connectOk);
+
 
 }
