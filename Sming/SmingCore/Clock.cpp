@@ -23,7 +23,7 @@ void delay(uint32_t time)
 	os_delay_us(time * 1000);
 }
 
-void IRAM_ATTR delayMicroseconds(uint32_t time)
+void delayMicroseconds(uint32_t time)
 {
 	os_delay_us(time);
 }

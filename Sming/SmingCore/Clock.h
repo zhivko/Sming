@@ -15,6 +15,6 @@ unsigned long micros(void);
 
 void delay(uint32_t time);
 #define delayMilliseconds(ms) delay(ms)
-void IRAM_ATTR delayMicroseconds(uint32_t time);
+void delayMicroseconds(uint32_t time);
 
 #endif
