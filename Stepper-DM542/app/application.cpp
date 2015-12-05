@@ -3,18 +3,20 @@
 #include <Wiring/SplitString.h>
 #include <rboot/rboot.h>
 #include <rboot/appcode/rboot-api.h>
+#include <SmingCore/Network/rBootHttpUpdate.h>
 #include <HardwareTimer.h>
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
-#define WIFI_SSID "PleaseEnterSSID" // Put you SSID and Password here
-#define WIFI_PWD "PleaseEnterPass"
+#define WIFI_SSID "AsusKZ" // Put you SSID and Password here
+#define WIFI_PWD "Doitman1"
 #endif
 
 Timer reportTimer;
 
 #define UPDATE_PIN 0 // GPIO0
 HttpFirmwareUpdate airUpdater;
+uint16 analogue;
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -29,6 +31,23 @@ rBootHttpUpdate* otaUpdater = 0;
 
 String ROM_0_URL = "http://192.168.1.24/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.24/spiff_rom.bin";
+
+void reportAnalogue()
+{
+	char buf[30];
+	sprintf(buf, "Analogue: %d", analogue);
+	String message = String(buf);
+	if (!message.equals(lastPositionMessage))
+	{
+		WebSocketsList &clients = server.getActiveWebSockets();
+		for (int i = 0; i < clients.count(); i++)
+		{
+			clients[i].sendString(message);
+		}
+		lastPositionMessage = message;
+		Serial.printf("Analogue: %d\r\n", analogue);
+	}
+}
 
 void reportPosition()
 {
@@ -50,6 +69,14 @@ void reportPosition()
 		lastPositionMessage = message;
 	}
 	//}
+}
+
+void IRAM_ATTR AnalogReadTimerInt()
+{
+	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
+	hardwareTimer.startOnce();
+
+	analogue = system_adc_read();
 }
 
 void IRAM_ATTR StepperTimerInt()
@@ -76,33 +103,31 @@ void IRAM_ATTR StepperTimerInt()
 		}
 	}
 
-
-
 	/*
-	uint32_t pin_mask_steppers = 0;
-	//set direction pins
-	for (int i = 0; i < 4; i++)
-	{
-		if (curPos[i] != nextPos[i])
-		{
-			int8_t sign = -1;
-			if (nextPos[i] > curPos[i])
-				sign = 1;
-			if (sign > 0)
-				digitalWrite(dir[i], false);
-			else
-				digitalWrite(dir[i], true);
-			curPos[i] = curPos[i] + sign;
-			pin_mask_steppers = pin_mask_steppers | (1<<step[i]);
-		}
-	}
-	delayMicroseconds(3);
-	GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
-	delayMicroseconds(5);
-	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers);   // Set pin a and b low
-	delayMicroseconds(5);
+	 uint32_t pin_mask_steppers = 0;
+	 //set direction pins
+	 for (int i = 0; i < 4; i++)
+	 {
+	 if (curPos[i] != nextPos[i])
+	 {
+	 int8_t sign = -1;
+	 if (nextPos[i] > curPos[i])
+	 sign = 1;
+	 if (sign > 0)
+	 digitalWrite(dir[i], false);
+	 else
+	 digitalWrite(dir[i], true);
+	 curPos[i] = curPos[i] + sign;
+	 pin_mask_steppers = pin_mask_steppers | (1<<step[i]);
+	 }
+	 }
+	 delayMicroseconds(3);
+	 GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
+	 delayMicroseconds(5);
+	 GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers);   // Set pin a and b low
+	 delayMicroseconds(5);
 
-	*/
+	 */
 }
 
 void OtaUpdate_CallBack(bool result)
@@ -207,6 +232,7 @@ void OtaUpdate()
 	}
 #endif
 
+#ifndef DISABLE_SPIFFS
 	// use user supplied values (defaults for 4mb flash in makefile)
 	if (slot == 0)
 	{
@@ -216,6 +242,7 @@ void OtaUpdate()
 	{
 		otaUpdater->addItem(RBOOT_SPIFFS_1, SPIFFS_URL);
 	}
+#endif
 
 	// set a callback
 	otaUpdater->setCallback(OtaUpdate_CallBack);
@@ -330,6 +357,23 @@ void serialCallBack(Stream& stream, char arrivedChar,
 		{
 			ShowInfo();
 		}
+		else if (!strcmp(str, "switch"))
+		{
+			Switch();
+		}
+		else if (!strcmp(str, "cat"))
+		{
+			Vector<String> files = fileList();
+			if (files.count() > 0)
+			{
+				Serial.printf("dumping file %s:\r\n", files[2].c_str());
+				Serial.println(fileGetContent(files[2]));
+			}
+			else
+			{
+				Serial.println("Empty spiffs!");
+			}
+		}
 		else if (!strcmp(str, "pos"))
 		{
 			reportPosition();
@@ -362,7 +406,7 @@ void serialCallBack(Stream& stream, char arrivedChar,
 		}
 		else
 		{
-			Serial.println("Trying to parse as gCode...");
+			Serial.printf("Trying to parse as gCode: %s\n", str);
 			parseGcode(str);
 		}
 	}
@@ -393,7 +437,7 @@ void IRAM_ATTR interruptHandler()
 	detachInterrupt(UPDATE_PIN);
 	Serial.println("Let's do cloud magic!");
 
-	// Start cloud update
+// Start cloud update
 	OtaUpdate();
 }
 
@@ -401,7 +445,7 @@ void onIndex(HttpRequest &request, HttpResponse &response)
 {
 	TemplateFileStream *tmpl = new TemplateFileStream("index.html");
 	auto &vars = tmpl->variables();
-	//vars["counter"] = String(counter);
+//vars["counter"] = String(counter);
 	response.sendTemplate(tmpl); // this template object will be deleted automatically
 }
 
@@ -424,7 +468,7 @@ void wsConnected(WebSocket& socket)
 {
 	totalActiveSockets++;
 	lastPositionMessage = "";
-	// Notify everybody about new connection
+// Notify everybody about new connection
 	/*
 	 WebSocketsList &clients = server.getActiveWebSockets();
 	 for (int i = 0; i < clients.count(); i++)
@@ -456,20 +500,20 @@ void initPins()
 {
 	Serial.println("Init pins");
 
-	//---------------------
+//---------------------
 	step[0] = 2;  //2
 	dir[0] = 0;   //0
 
 	step[1] = 4;  //4
 	dir[1] = 5;   //5
-	//---------------------
+//---------------------
 	step[2] = 13;
 	dir[2] = 12;
 
 	step[3] = 16;
 	dir[3] = 14;
-	//---------------------
-	//system_soft_wdt_feed();
+//---------------------
+//system_soft_wdt_feed();
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -491,7 +535,7 @@ void startWebServer()
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
 
-	// Web Sockets configuration
+// Web Sockets configuration
 	server.enableWebSockets(true);
 	server.setWebSocketConnectionHandler(wsConnected);
 	server.setWebSocketMessageHandler(wsMessageReceived);
@@ -510,7 +554,8 @@ void connectOk()
 	system_soft_wdt_feed();
 	Serial.println("I'm CONNECTED");
 	Serial.println("IP: ");
-	Serial.println(WifiStation.getIP().toString());
+	String ipString = WifiStation.getIP().toString();
+	Serial.println(ipString);
 
 	startWebServer();
 
@@ -519,10 +564,21 @@ void connectOk()
 	Serial.println();
 	Serial.setCallback(serialCallBack);
 
-	reportTimer.initializeMs(1000, reportPosition).start();
-
-	hardwareTimer.initializeUs(deltat, StepperTimerInt);
-	hardwareTimer.startOnce();
+	if (ipString.equals("192.168.1.110"))
+	{
+		// distance sensor
+		deltat = 100000;
+		reportTimer.initializeMs(300, reportAnalogue).start();
+		hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
+		hardwareTimer.startOnce();
+	}
+	else if (ipString.equals("192.168.1.101"))
+	{
+		// 4 axis stepper driver
+		reportTimer.initializeMs(300, reportPosition).start();
+		hardwareTimer.initializeUs(deltat, StepperTimerInt);
+		hardwareTimer.startOnce();
+	}
 }
 
 void couldntConnect()
@@ -532,16 +588,15 @@ void couldntConnect()
 
 void init()
 {
-	//ets_wdt_disable();
+//ets_wdt_disable();
 
 	Serial.begin(SERIAL_BAUD_RATE);
-	Serial.println("********************");
-	Serial.println("*****Init running***");
-	Serial.println("********************");
+	Serial.println("************************");
+	Serial.println("*6*** Init running *****");
+	Serial.println("************************");
 
 	Serial.systemDebugOutput(true);
 	System.setCpuFrequency(eCF_160MHz);
-	//system_soft_wdt_stop();
 
 	int slot = rboot_get_current_rom();
 #ifndef DISABLE_SPIFFS
@@ -576,8 +631,5 @@ void init()
 
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
 	WifiStation.enable(true);
-
 	WifiStation.waitConnection(connectOk);
-
-
 }

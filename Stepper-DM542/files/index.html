@@ -8,12 +8,13 @@
   <body>
 
     <h1>4 stepper control from ESP8266</h1>
-    <input type="text" id="gCodeCmd1" onkeypress="return searchKeyPress2(event);" value="X5000 Y5000 Z5000 E5000" size="30" />
+    <input type="text" id="gCodeCmd1" onkeypress="return searchKeyPress1(event);" value="X5000 Y5000 Z5000 E5000" size="30" />
     <input type="button" id="btn1" Value="Send" onclick="doSend(document.getElementById('gCodeCmd1'));" />
 	<br>
     <input type="text" id="gCodeCmd2" onkeypress="return searchKeyPress2(event);" value="X0 Y0 Z0 E0" size="30" />
     <input type="button" id="btn2" Value="Send" onclick="doSend(document.getElementById('gCodeCmd2'));" />
     <br>
+    Analogue reading: <label id='Analogue' for="male"></label>
     <br>
     Select oposite or translate options:
     <br>

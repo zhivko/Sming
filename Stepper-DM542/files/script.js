@@ -67,6 +67,10 @@
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionZ').textContent = res[2];
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionE').textContent = res[3];
 		}
+		else if(evt.data.slice(0,8) == 'Analogue')
+		{
+			document.getElementById('Analogue').textContent = res[1];
+		}
 	  }
 	  function onError(evt)
 	  {
