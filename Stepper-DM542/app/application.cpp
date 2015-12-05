@@ -8,15 +8,15 @@
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
-#define WIFI_SSID "AsusKZ" // Put you SSID and Password here
-#define WIFI_PWD "Doitman1"
+#define WIFI_SSID "Enter_wifi_ssid" // Put you SSID and Password here
+#define WIFI_PWD "Enter_wifi_pwd"
 #endif
 
 Timer reportTimer;
 
 #define UPDATE_PIN 0 // GPIO0
 HttpFirmwareUpdate airUpdater;
-uint16 analogue;
+float_t floatAnalog;
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -35,7 +35,10 @@ String SPIFFS_URL = "http://192.168.1.24/spiff_rom.bin";
 void reportAnalogue()
 {
 	char buf[30];
-	sprintf(buf, "Analogue: %d", analogue);
+	char buf1[30];
+	dtostrf(floatAnalog, 10, 8, buf1);
+
+	sprintf(buf, "Analogue: %s", buf1);
 	String message = String(buf);
 	if (!message.equals(lastPositionMessage))
 	{
@@ -45,7 +48,7 @@ void reportAnalogue()
 			clients[i].sendString(message);
 		}
 		lastPositionMessage = message;
-		Serial.printf("Analogue: %d\r\n", analogue);
+		//Serial.printf("Analogue: %d\r\n", analogue);
 	}
 }
 
@@ -76,7 +79,15 @@ void IRAM_ATTR AnalogReadTimerInt()
 	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 	hardwareTimer.startOnce();
 
-	analogue = system_adc_read();
+	int8_t count=5;
+	int8_t i =0;
+	float analog=0;
+	while(i<10)
+	{
+		analog += system_adc_read();
+		i++;
+	}
+	floatAnalog = analog/count;
 }
 
 void IRAM_ATTR StepperTimerInt()
@@ -568,7 +579,7 @@ void connectOk()
 	{
 		// distance sensor
 		deltat = 100000;
-		reportTimer.initializeMs(300, reportAnalogue).start();
+		reportTimer.initializeMs(200, reportAnalogue).start();
 		hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 		hardwareTimer.startOnce();
 	}
