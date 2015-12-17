@@ -153,7 +153,7 @@ else
 endif
 # libraries used in this project, mainly provided by the SDK
 USER_LIBDIR = $(SMING_HOME)/compiler/lib/
-LIBS		= microc microgcc hal phy pp net80211 lwip wpa $(LIBMAIN) sming pwm $(EXTRA_LIBS)
+LIBS		= microc microgcc hal phy pp net80211 lwip wpa $(LIBMAIN) sming crypto pwm $(EXTRA_LIBS)
 
 # we will use global WiFi settings from Eclipse Environment Variables, if possible
 WIFI_SSID ?= ""
@@ -191,6 +191,7 @@ else
 	flashimageoptions += -fm qio
 endif
 
+# flash larger than 1024KB only use 1024KB to storage user1.bin and user2.bin
 ifeq ($(SPI_SIZE), 256K)
 	flashimageoptions += -fs 2m
 	SPIFF_SIZE ?= 131072  #128K
@@ -256,6 +257,7 @@ export RBOOT_BIG_FLASH
 export RBOOT_BUILD_BASE
 export RBOOT_FW_BASE
 export SPI_SIZE
+export SPI_MODE
 export ESPTOOL2
 export SDK_BASE
 
