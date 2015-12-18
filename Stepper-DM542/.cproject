@@ -39,17 +39,22 @@
 								</outputEntries>
 							</builder>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1152040078" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
-								<option id="gnu.c.compiler.option.include.paths.1475612617" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false"/>
+								<option id="gnu.c.compiler.option.include.paths.1475612617" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Stepper-DM542}&quot;"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.567122940" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
 								<option id="gnu.cpp.compiler.option.include.paths.432203759" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/SmingCore&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ESP_HOME}/sdk/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/rboot&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Stepper-DM542}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.319014184" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SPIFF_SIZE"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1316366073" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -62,14 +67,28 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.1695475346" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.1503592841" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
-								<option id="gnu.both.asm.option.include.paths.2044165254" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths"/>
+								<option id="gnu.both.asm.option.include.paths.2044165254" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Stepper-DM542}&quot;"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1563884925" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415.2105750421" name="application.cpp" rcbsApplicability="disable" resourcePath="app/application.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417.1133325088">
+						<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417.1133325088" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417">
+							<option id="gnu.cpp.compiler.option.preprocessor.def.1546257941" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+								<listOptionValue builtIn="false" value="SPIFF_SIZE"/>
+								<listOptionValue builtIn="false" value="RBOOT_SPIFFS_0"/>
+								<listOptionValue builtIn="false" value="RBOOT_SPIFFS_1"/>
+							</option>
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1541561707" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="SmingFramework;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+			</storageModule>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -81,21 +100,6 @@
 		<configuration configurationName="Default">
 			<resource resourceType="PROJECT" workspacePath="/Stepper-DM542"/>
 		</configuration>
-	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415;cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415.;cdt.managedbuild.tool.gnu.cross.c.compiler.1152040078;cdt.managedbuild.tool.gnu.c.compiler.input.567122940">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1752445652;cdt.managedbuild.toolchain.gnu.mingw.base.1752445652.553879504;cdt.managedbuild.tool.gnu.c.compiler.mingw.base.1354292643;cdt.managedbuild.tool.gnu.c.compiler.input.838249338">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415;cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415.;cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417;cdt.managedbuild.tool.gnu.cpp.compiler.input.1316366073">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1752445652;cdt.managedbuild.toolchain.gnu.mingw.base.1752445652.553879504;cdt.managedbuild.tool.gnu.cpp.compiler.mingw.base.446234452;cdt.managedbuild.tool.gnu.cpp.compiler.input.854862265">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
@@ -140,4 +144,19 @@
 		</buildTargets>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1752445652;cdt.managedbuild.toolchain.gnu.mingw.base.1752445652.553879504;cdt.managedbuild.tool.gnu.cpp.compiler.mingw.base.446234452;cdt.managedbuild.tool.gnu.cpp.compiler.input.854862265">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1752445652;cdt.managedbuild.toolchain.gnu.mingw.base.1752445652.553879504;cdt.managedbuild.tool.gnu.c.compiler.mingw.base.1354292643;cdt.managedbuild.tool.gnu.c.compiler.input.838249338">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415;cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415.;cdt.managedbuild.tool.gnu.cross.c.compiler.1152040078;cdt.managedbuild.tool.gnu.c.compiler.input.567122940">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415;cdt.managedbuild.toolchain.gnu.mingw.base.1135534147.973744415.;cdt.managedbuild.tool.gnu.cross.cpp.compiler.735387417;cdt.managedbuild.tool.gnu.cpp.compiler.input.1316366073">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

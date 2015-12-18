@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Basic_Blink</name>
+	<name>Stepper-DM542</name>
 	<comment></comment>
 	<projects>
+		<project>Stepper-DM542</project>
 		<project>SmingFramework</project>
 	</projects>
 	<buildSpec>

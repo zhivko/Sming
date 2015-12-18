@@ -21,10 +21,10 @@ Sming - Open Source framework for high efficiency WiFi SoC ESP8266 native develo
 * MQTT protocol based on [libemqtt] (https://github.com/menudoproblema/libemqtt)
 * Networking based on LWIP stack
 * Simple and powerfull hardware API wrappers
-* Based on Espressif SDK v1.3.0
+* Based on Espressif NONOS SDK 1.4.0 & 1.5.0
 
 ## Latest Release
-- [Sming V1.4.0](https://github.com/SmingHub/Sming/releases/tag/1.4.0)
+- [Sming V2.0.0](https://github.com/SmingHub/Sming/releases/tag/2.0.0)
 
 ## Getting started
 - [Windows](https://github.com/SmingHub/Sming/wiki/Windows-Quickstart)
@@ -33,7 +33,7 @@ Sming - Open Source framework for high efficiency WiFi SoC ESP8266 native develo
 
 ## Additional needed software 
 - Spiffy  : Source included in Sming repository
-- [ESPtool2] (https://github.com/raburton/esp8266) esptool2 
+- [ESPtool2] (https://github.com/raburton/esptool2) esptool2 
 
 You can find more information about compilation and flashing process by reading esp8266.com forum discussion thread.
 
@@ -117,6 +117,7 @@ void onDataSent(HttpClient& client, bool successful)
     Serial.println("Successful!");
   else
     Serial.println("Failed");
+<<<<<<< HEAD
 }
 ```
 
@@ -146,6 +147,8 @@ void OtaUpdate() {
 
 	// start update
 	otaUpdater->start();
+=======
+>>>>>>> abb4cf301ddc167cdeb8764c581984eb601ba340
 }
 ```
 

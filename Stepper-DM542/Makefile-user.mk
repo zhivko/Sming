@@ -52,7 +52,7 @@ SPIFF_SIZE      ?= 65536
 #DISABLE_SPIFFS  = 1
 ## flash offsets for spiffs, set if using two rom mode or not on a 4mb flash
 ## (spiffs location defaults to the mb after the rom slot on 4mb flash)
-#RBOOT_SPIFFS_0  ?= 0x100000
-#RBOOT_SPIFFS_1  ?= 0x300000
+RBOOT_SPIFFS_0  ?= 0x100000
+RBOOT_SPIFFS_1  ?= 0x300000
 ## esptool2 path
 #ESPTOOL2        ?= esptool2
