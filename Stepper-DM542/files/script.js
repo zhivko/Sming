@@ -15,6 +15,16 @@
 		    return true;
 		}
 		
+		function handleEnable(cb)
+		{
+			if(cb.checked)
+				doSendCommand("enable");
+			else
+				doSendCommand("disable");
+			
+			
+		}
+		
 		function searchKeyPress1(e)
 		{
 		    // look for window.event in case event isn't passed in
