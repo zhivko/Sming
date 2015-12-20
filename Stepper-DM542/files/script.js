@@ -15,7 +15,7 @@
 		    return true;
 		}
 		
-		function handleEnable(cb)
+		function handleEnableMotors(cb)
 		{
 			if(cb.checked)
 				doSendCommand("enable");
@@ -70,12 +70,16 @@
 	  {
 		//writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
 		var res = evt.data.split(' ');
-		if (evt.data.slice(0,1) == 'X' && res.length==4)
+		if (evt.data.slice(0,1) == 'X' && res.length==5)
 		{
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionX').textContent = res[0];
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionY').textContent = res[1];
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionZ').textContent = res[2];
 			document.getElementById("roseSvg").contentDocument.getElementById('PositionE').textContent = res[3];
+			if(endsWith(res[4],"1"))
+				document.getElementById("enableMotors").checked="checked";
+			else
+				document.getElementById("enableMotors").checked="";
 		}
 		else if(evt.data.slice(0,8) == 'Analogue')
 		{
@@ -157,6 +161,10 @@
 	{
 		writeToScreen("SENT: " + a); 
 		doSendCommand(a);		
+	}
+
+	function endsWith(str, suffix) {
+	    return str.indexOf(suffix, str.length - suffix.length) !== -1;
 	}
 
 window.addEventListener("load", init, false);

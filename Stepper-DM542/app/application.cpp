@@ -24,6 +24,7 @@ uint8_t step[4];
 uint8_t dir[4];
 uint32_t deltat = 2000;
 String lastPositionMessage = "";
+bool steppersOn = false;
 
 rBootHttpUpdate* otaUpdater = 0;
 
@@ -55,27 +56,23 @@ void sendToClients(String message) {
 }
 
 void enableMotors() {
+	steppersOn = true;
 	digitalWrite(2, false);
 }
 
 void disableMotors() {
+	steppersOn = false;
 	digitalWrite(2, true);
 }
 
-void reportPosition() {
-	// report position only when steppers reached final stage
-	// so movement of steppers is not interrupted ba wifi communication
-	//if (nextPos[0] == curPos[0] && nextPos[1] == curPos[1]
-	//		&& nextPos[2] == curPos[2] && nextPos[3] == curPos[3])
-	//{
+void reportStatus() {
 	char buf[30];
-	sprintf(buf, "X%d Y%d Z%d E%d", curPos[0], curPos[1], curPos[2], curPos[3]);
+	sprintf(buf, "X%d Y%d Z%d E%d M%d", curPos[0], curPos[1], curPos[2], curPos[3], steppersOn);
 	String message = String(buf);
 	if (!message.equals(lastPositionMessage)) {
 		sendToClients(message);
 		lastPositionMessage = message;
 	}
-	//}
 }
 
 void IRAM_ATTR AnalogReadTimerInt() {
@@ -96,48 +93,28 @@ void IRAM_ATTR StepperTimerInt() {
 	hardwareTimer.initializeUs(deltat, StepperTimerInt);
 	hardwareTimer.startOnce();
 
-	/*
-	 for (int i = 0; i < 4; i++)
-	 {
-	 if (curPos[i] != nextPos[i])
-	 {
-	 int8_t sign = -1;
-	 if (nextPos[i] > curPos[i])
-	 sign = 1;
-	 if (sign > 0)
-	 digitalWrite(dir[i], false);
-	 else
-	 digitalWrite(dir[i], true);
-	 delayMicroseconds(3);
-	 digitalWrite(step[i], false);
-	 delayMicroseconds(5);
-	 digitalWrite(step[i], true);
-	 curPos[i] += sign;
-	 }
-	 }
-	 */
-
-	uint32_t pin_mask_steppers = 0;
-	//set direction pins
-	for (int i = 0; i < 4; i++) {
-		if (curPos[i] != nextPos[i]) {
-			int8_t sign = -1;
-			if (nextPos[i] > curPos[i])
-				sign = 1;
-			if (sign > 0)
-				digitalWrite(dir[i], false);
-			else
-				digitalWrite(dir[i], true);
-			curPos[i] = curPos[i] + sign;
-			pin_mask_steppers = pin_mask_steppers | (1 << step[i]);
+	if (steppersOn) {
+		uint32_t pin_mask_steppers = 0;
+		//set direction pins
+		for (int i = 0; i < 4; i++) {
+			if (curPos[i] != nextPos[i]) {
+				int8_t sign = -1;
+				if (nextPos[i] > curPos[i])
+					sign = 1;
+				if (sign > 0)
+					digitalWrite(dir[i], false);
+				else
+					digitalWrite(dir[i], true);
+				curPos[i] = curPos[i] + sign;
+				pin_mask_steppers = pin_mask_steppers | (1 << step[i]);
+			}
 		}
+		delayMicroseconds(3);
+		GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
+		delayMicroseconds(5);
+		GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers); // Set pin a and b low
+		delayMicroseconds(5);
 	}
-	delayMicroseconds(3);
-	GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin_mask_steppers);
-	delayMicroseconds(5);
-	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin_mask_steppers); // Set pin a and b low
-	delayMicroseconds(5);
-
 }
 
 void OtaUpdate_CallBack(bool result) {
@@ -240,10 +217,10 @@ otaUpdater->addItem(RBOOT_SPIFFS_1, SPIFFS_URL);
 }
 #endif
 
-   // set a callback
+ // set a callback
 otaUpdater->setCallback(OtaUpdate_CallBack);
 
-   // start update
+ // start update
 otaUpdater->start();
 }
 
@@ -253,7 +230,7 @@ if (commandLine.equals("ota")) {
 OtaUpdate();
 return;
 } else if (commandLine.equals("pos")) {
-reportPosition();
+reportStatus();
 return;
 } else if (commandLine.equals("enable")) {
 enableMotors();
@@ -263,45 +240,46 @@ disableMotors();
 return;
 }
 
+if (steppersOn) {
 Vector<String> commandToken;
 int numToken = splitString(commandLine, ' ', commandToken);
 for (int i = 0; i < numToken; i++) {
-Serial.printf("Command: %s\r\n", commandToken[i].c_str());
-String motor = commandToken[i].substring(0, 1);
-String sign = commandToken[i].substring(1, 2);
-String posStr = "";
-if (sign == "+" || sign == "-") {
-	posStr = commandToken[i].substring(2, commandToken[i].length());
-} else {
-	sign = "";
-	posStr = commandToken[i].substring(1, commandToken[i].length());
-}
-int8_t index = -1;
-if (motor == "X")
-	index = 0;
-else if (motor == "Y")
-	index = 1;
-else if (motor == "Z")
-	index = 2;
-else if (motor == "E")
-	index = 3;
-else if (motor == "T") {
-	deltat = atoi(posStr.c_str());
-}
-if (index > -1) {
-	if (sign == "+")
-		nextPos[index] = nextPos[index] + atol(posStr.c_str());
-	else if (sign == "-")
-		nextPos[index] = nextPos[index] - atol(posStr.c_str());
-	else
-		nextPos[index] = atol(posStr.c_str());
-	Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
+	Serial.printf("Command: %s\r\n", commandToken[i].c_str());
+	String motor = commandToken[i].substring(0, 1);
+	String sign = commandToken[i].substring(1, 2);
+	String posStr = "";
+	if (sign == "+" || sign == "-") {
+		posStr = commandToken[i].substring(2, commandToken[i].length());
+	} else {
+		sign = "";
+		posStr = commandToken[i].substring(1, commandToken[i].length());
+	}
+	int8_t index = -1;
+	if (motor == "X")
+		index = 0;
+	else if (motor == "Y")
+		index = 1;
+	else if (motor == "Z")
+		index = 2;
+	else if (motor == "E")
+		index = 3;
+	else if (motor == "T") {
+		deltat = atoi(posStr.c_str());
+	}
+	if (index > -1) {
+		if (sign == "+")
+			nextPos[index] = nextPos[index] + atol(posStr.c_str());
+		else if (sign == "-")
+			nextPos[index] = nextPos[index] - atol(posStr.c_str());
+		else
+			nextPos[index] = atol(posStr.c_str());
+		Serial.printf("Set nextpos[%d] to %d\r\n", index, nextPos[index]);
+	}
 }
 }
 }
 
-void serialCallBack(Stream& stream, char arrivedChar,
-unsigned short availableCharsCount) {
+void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
 int ia = (int) arrivedChar;
 if (ia == 13) {
 char str[availableCharsCount];
@@ -317,8 +295,7 @@ if (!strcmp(str, "connect")) {
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
 	WifiStation.enable(true);
 } else if (!strcmp(str, "ip")) {
-	Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(),
-			WifiStation.getMAC().c_str());
+	Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(), WifiStation.getMAC().c_str());
 } else if (!strcmp(str, "ota")) {
 	OtaUpdate();
 } else if (!strcmp(str, "restart")) {
@@ -342,7 +319,7 @@ if (!strcmp(str, "connect")) {
 		Serial.println("Empty spiffs!");
 	}
 } else if (!strcmp(str, "pos")) {
-	reportPosition();
+	reportStatus();
 } else if (!strcmp(str, "move")) {
 	Serial.println();
 	nextPos[0] += 10000;
@@ -517,7 +494,7 @@ hardwareTimer.startOnce();
 } else if (ipString.equals("192.168.1.111")) {
 // 4 axis stepper driver
 
-reportTimer.initializeMs(300, reportPosition).start();
+reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
 hardwareTimer.startOnce();
 initPins();
