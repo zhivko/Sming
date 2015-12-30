@@ -51,7 +51,7 @@ class Adafruit_NeoPixel {
 
   void
     begin(void),
-    show(void),
+	IRAM_ATTR show(void),
     setPin(uint8_t p),
     setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b),
     setPixelColor(uint16_t n, uint32_t c),
