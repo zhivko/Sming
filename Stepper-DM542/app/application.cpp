@@ -11,10 +11,13 @@
 #define WIFI_SSID "Enter_wifi_ssid" // Put you SSID and Password here
 #define WIFI_PWD "Enter_wifi_pwd"
 #endif
+#define WIFI_SSID1  "Sintex"
+#define WIFI_PWD1  "sintex92"
 
 Timer reportTimer;
 HttpFirmwareUpdate airUpdater;
 float_t floatAnalog;
+
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -501,6 +504,13 @@ initPins();
 }
 }
 
+void connectNotOk() {
+WifiStation.enable(false);
+WifiStation.config(WIFI_SSID1, WIFI_PWD1);
+WifiStation.enable(true);
+WifiStation.waitConnection(connectOk, 10, connectNotOk);
+}
+
 void couldntConnect() {
 Serial.println("Couldn't connect");
 }
@@ -544,5 +554,5 @@ debugf("spiffs disabled");
 
 WifiStation.config(WIFI_SSID, WIFI_PWD);
 WifiStation.enable(true);
-WifiStation.waitConnection(connectOk);
+WifiStation.waitConnection(connectOk, 12, connectNotOk);
 }

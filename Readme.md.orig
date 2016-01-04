@@ -39,9 +39,8 @@ You can find more information about compilation and flashing process by reading 
 
 ## Examples
 More information at **[Wiki Examples](https://github.com/SmingHub/Sming/wiki/examples)** page.
-
 <<<<<<< HEAD
-=======
+
 ### OTA application update based on rBoot
 ```c++
 void OtaUpdate() {
@@ -70,8 +69,9 @@ void OtaUpdate() {
   otaUpdater->start();
 }
 ```
+=======
+>>>>>>> 7b9d376a9a1ac99e9a38de14db3c4cd1f4684529
 
->>>>>>> 066b3607cb587d35b891aeab868fbe76baf46810
 ### Simple GPIO input/output
 ```c++
 #define LED_PIN 2 // GPIO2
@@ -118,6 +118,7 @@ void onDataSent(HttpClient& client, bool successful)
   else
     Serial.println("Failed");
 <<<<<<< HEAD
+=======
 }
 ```
 
@@ -147,8 +148,7 @@ void OtaUpdate() {
 
 	// start update
 	otaUpdater->start();
-=======
->>>>>>> abb4cf301ddc167cdeb8764c581984eb601ba340
+>>>>>>> 7b9d376a9a1ac99e9a38de14db3c4cd1f4684529
 }
 ```
 
