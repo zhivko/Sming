@@ -2,10 +2,18 @@
 // Capacity AD7747 sensor example based on  Scanneri2c_scanner (Sming version)
 //
 
-#include "../include/user_config.h"
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Timer.h>
 #include <SmingCore/HX711.h>
+
+
+#include <user_config.h>
+#include <SmingCore/SmingCore.h>
+#include <Wiring/SplitString.h>
+#include <rboot/rboot.h>
+#include <rboot/appcode/rboot-api.h>
+#include <SmingCore/Network/rBootHttpUpdate.h>
+
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
@@ -71,20 +79,24 @@ void wsDisconnected(WebSocket& socket) {
 }
 
 void readPeriodically() {
+	Serial.println("reading periodicallyr\n");
+
 	while (!hx711.is_ready()) {
 		delay(1);
 	}
 	long result = hx711.read();
 	pf = result / 1.f;
 	procTimer.initializeMs(150, readPeriodically).startOnce();
+
 }
 
 void startWebServer() {
+	Serial.println("Starting web server...Phase1");
 	server.listen(80);
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
 
-// Web Sockets configuration
+	// Web Sockets configuration
 	server.enableWebSockets(true);
 	server.setWebSocketConnectionHandler(wsConnected);
 	server.setWebSocketMessageHandler(wsMessageReceived);
@@ -102,7 +114,7 @@ void connectOk() {
 	Serial.println("I'm CONNECTED");
 	Serial.println(WifiStation.getIP().toString());
 	startWebServer();
-	readPeriodically();
+	//readPeriodically();
 }
 
 void couldntConnect() {
@@ -130,8 +142,6 @@ void init() {
 	Serial.print("rst_info.excvaddr ");
 	Serial.println(system_get_rst_info()->excvaddr, HEX);
 
-	HX711 hx711;
-	hx711.
 
 	WifiStation.enable(true);
 	WifiStation.config(WIFI_SSID, WIFI_PWD);

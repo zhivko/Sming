@@ -8,6 +8,9 @@
 #include <Arduino.h>
 #include <HX711.h>
 
+HX711::HX711() {
+}
+
 HX711::HX711(byte dout, byte pd_sck, byte gain) {
 	PD_SCK 	= pd_sck;
 	DOUT 	= dout;

@@ -5,6 +5,7 @@
 #include <rboot/appcode/rboot-api.h>
 #include <SmingCore/Network/rBootHttpUpdate.h>
 #include <HardwareTimer.h>
+#include <SmingCore/HX711.h>
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
@@ -17,7 +18,6 @@
 Timer reportTimer;
 HttpFirmwareUpdate airUpdater;
 float_t floatAnalog;
-
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -33,6 +33,8 @@ rBootHttpUpdate* otaUpdater = 0;
 
 String ROM_0_URL = "http://192.168.1.24/firmware/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.24/firmware/spiff_rom.bin";
+
+HX711 hx711 = HX711();
 
 void reportAnalogue() {
 	char buf[30];
@@ -70,7 +72,8 @@ void disableMotors() {
 
 void reportStatus() {
 	char buf[30];
-	sprintf(buf, "X%d Y%d Z%d E%d M%d", curPos[0], curPos[1], curPos[2], curPos[3], steppersOn);
+	sprintf(buf, "X%d Y%d Z%d E%d M%d", curPos[0], curPos[1], curPos[2],
+			curPos[3], steppersOn);
 	String message = String(buf);
 	if (!message.equals(lastPositionMessage)) {
 		sendToClients(message);
@@ -81,15 +84,8 @@ void reportStatus() {
 void IRAM_ATTR AnalogReadTimerInt() {
 	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 	hardwareTimer.startOnce();
-
-	int8_t count = 5;
-	int8_t i = 0;
-	float analog = 0;
-	while (i < 10) {
-		analog += system_adc_read();
-		i++;
-	}
-	floatAnalog = analog / count;
+	long result = hx711.read();
+	floatAnalog = result / 1.f;
 }
 
 void IRAM_ATTR StepperTimerInt() {
@@ -282,7 +278,8 @@ for (int i = 0; i < numToken; i++) {
 }
 }
 
-void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
+void serialCallBack(Stream& stream, char arrivedChar,
+unsigned short availableCharsCount) {
 int ia = (int) arrivedChar;
 if (ia == 13) {
 char str[availableCharsCount];
@@ -298,7 +295,8 @@ if (!strcmp(str, "connect")) {
 	WifiStation.config(WIFI_SSID, WIFI_PWD);
 	WifiStation.enable(true);
 } else if (!strcmp(str, "ip")) {
-	Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(), WifiStation.getMAC().c_str());
+	Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(),
+			WifiStation.getMAC().c_str());
 } else if (!strcmp(str, "ota")) {
 	OtaUpdate();
 } else if (!strcmp(str, "restart")) {
@@ -490,14 +488,21 @@ Serial.setCallback(serialCallBack);
 
 if (ipString.equals("192.168.1.110")) {
 // distance sensor
-	Serial.println("distance sensor");
+Serial.println("distance sensor");
 deltat = 100000;
+
+hx711 = HX711(4, 5);
+
+hx711.set_gain(64);
+
+
 reportTimer.initializeMs(200, reportAnalogue).start();
 hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 hardwareTimer.startOnce();
-} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112")) {
+} else if (ipString.equals("192.168.1.111")
+	|| ipString.equals("192.168.1.112")) {
 // 4 axis stepper driver
-	Serial.println("4 Axis Stepper driver");
+Serial.println("4 Axis Stepper driver");
 
 reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
