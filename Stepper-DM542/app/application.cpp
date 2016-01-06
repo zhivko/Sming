@@ -5,7 +5,7 @@
 #include <rboot/appcode/rboot-api.h>
 #include <SmingCore/Network/rBootHttpUpdate.h>
 #include <HardwareTimer.h>
-#include <SmingCore/HX711.h>
+#include <Libraries/ADC_HX711/HX711.h>
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
@@ -494,6 +494,7 @@ deltat = 100000;
 hx711 = HX711(4, 5);
 
 hx711.set_gain(64);
+
 
 
 reportTimer.initializeMs(200, reportAnalogue).start();
