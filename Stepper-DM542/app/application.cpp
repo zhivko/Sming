@@ -490,12 +490,14 @@ Serial.setCallback(serialCallBack);
 
 if (ipString.equals("192.168.1.110")) {
 // distance sensor
+	Serial.println("distance sensor");
 deltat = 100000;
 reportTimer.initializeMs(200, reportAnalogue).start();
 hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 hardwareTimer.startOnce();
-} else if (ipString.equals("192.168.1.111")) {
+} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112")) {
 // 4 axis stepper driver
+	Serial.println("4 Axis Stepper driver");
 
 reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
@@ -509,10 +511,6 @@ WifiStation.enable(false);
 WifiStation.config(WIFI_SSID1, WIFI_PWD1);
 WifiStation.enable(true);
 WifiStation.waitConnection(connectOk, 10, connectNotOk);
-}
-
-void couldntConnect() {
-Serial.println("Couldn't connect");
 }
 
 void init() {
