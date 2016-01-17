@@ -82,10 +82,36 @@ void reportStatus() {
 }
 
 void IRAM_ATTR AnalogReadTimerInt() {
+	int maxTimeout = 100;
+	int sleeping = 0;
+
+	int averageLoopMax = 30;
+	int j = 0;
+	float analogSum=0;
+	int added=0;
+	float tempAnalog;
+
+	while (j < averageLoopMax) {
+		while (!hx711.is_ready() && sleeping < 100) {
+			delayMicroseconds(5);
+			sleeping = sleeping + 5;
+		}
+		if (hx711.is_ready()) {
+			hardwareTimer.startOnce();
+			long result = hx711.read();
+			tempAnalog = result / 1.f;
+
+			analogSum = analogSum + tempAnalog;
+			added++;
+		} else {
+			//Still not ready
+			//floatAnalog = -1.0;
+		}
+		j++;
+	}
+	floatAnalog = analogSum/added;
 	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
-	hardwareTimer.startOnce();
-	long result = hx711.read();
-	floatAnalog = result / 1.f;
+
 }
 
 void IRAM_ATTR StepperTimerInt() {
@@ -486,25 +512,21 @@ Serial.println("Type 'help' and press enter for instructions.");
 Serial.println();
 Serial.setCallback(serialCallBack);
 
-if (ipString.equals("192.168.1.110")) {
+if (ipString.equals("192.168.1.114")) {
 // distance sensor
-Serial.println("distance sensor");
+Serial.println("Distance sensor");
 deltat = 100000;
-
 hx711 = HX711(4, 5);
-
 hx711.set_gain(64);
-
-
-
-reportTimer.initializeMs(200, reportAnalogue).start();
+//hx711.tare(15);
+reportTimer.initializeMs(100, reportAnalogue).start();
 hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 hardwareTimer.startOnce();
 } else if (ipString.equals("192.168.1.111")
 	|| ipString.equals("192.168.1.112")) {
 // 4 axis stepper driver
+deltat = 2000;
 Serial.println("4 Axis Stepper driver");
-
 reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
 hardwareTimer.startOnce();
