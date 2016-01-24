@@ -18,6 +18,7 @@
 Timer reportTimer;
 HttpFirmwareUpdate airUpdater;
 float_t floatAnalog;
+long longAnalog;
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -36,10 +37,17 @@ String SPIFFS_URL = "http://192.168.1.24/firmware/spiff_rom.bin";
 
 HX711 hx711 = HX711();
 
+uint8_t x = 0;
+uint8_t y = 1;
+uint8_t z = 2;
+uint8_t e = 3;
+
 void reportAnalogue() {
 	char buf[30];
 	char buf1[30];
-	dtostrf(floatAnalog, 10, 8, buf1);
+	dtostrf(floatAnalog, 7, 3, buf1);
+
+//		longAnalog
 
 	sprintf(buf, "Analogue: %s", buf1);
 	String message = String(buf);
@@ -87,8 +95,8 @@ void IRAM_ATTR AnalogReadTimerInt() {
 
 	int averageLoopMax = 30;
 	int j = 0;
-	float analogSum=0;
-	int added=0;
+	long analogSum = 0;
+	int added = 0;
 	float tempAnalog;
 
 	while (j < averageLoopMax) {
@@ -99,9 +107,7 @@ void IRAM_ATTR AnalogReadTimerInt() {
 		if (hx711.is_ready()) {
 			hardwareTimer.startOnce();
 			long result = hx711.read();
-			tempAnalog = result / 1.f;
-
-			analogSum = analogSum + tempAnalog;
+			analogSum = analogSum + result;
 			added++;
 		} else {
 			//Still not ready
@@ -109,7 +115,7 @@ void IRAM_ATTR AnalogReadTimerInt() {
 		}
 		j++;
 	}
-	floatAnalog = analogSum/added;
+	floatAnalog = analogSum / added;
 	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 
 }
@@ -263,6 +269,31 @@ return;
 } else if (commandLine.equals("disable")) {
 disableMotors();
 return;
+} else if (commandLine.startsWith("reassign"))
+{
+	//sendToClients(message)
+	//reassign x=3 y=0 z=2 e=1
+	Vector<String> commandToken;
+	int numToken = splitString(commandLine, ' ', commandToken);
+	for (int i = 1; i < numToken; i++) {
+		Vector<String> axisIndex;
+		String axisIndexStr = commandToken[i].c_str();
+		splitString(axisIndexStr, '=', axisIndex);
+		String axis = axisIndex[0].c_str();
+		if(axis.equals("x"))
+			x=atoi(axisIndex[1].c_str());
+		else if(axis.equals("y"))
+			y=atoi(axisIndex[1].c_str());
+		else if(axis.equals("z"))
+			z=atoi(axisIndex[1].c_str());
+		else if(axis.equals("e"))
+			e=atoi(axisIndex[1].c_str());
+	}
+	char buf[150];
+	sprintf(buf, "Reassign: x=%d y=%d z=%d e=%d\r\n", x,y,z,e);
+	String msgBack = String(buf);
+	sendToClients(msgBack);
+	return;
 }
 
 if (steppersOn) {
@@ -281,13 +312,13 @@ for (int i = 0; i < numToken; i++) {
 	}
 	int8_t index = -1;
 	if (motor == "X")
-		index = 0;
+		index = x;
 	else if (motor == "Y")
-		index = 1;
+		index = y;
 	else if (motor == "Z")
-		index = 2;
+		index = z;
 	else if (motor == "E")
-		index = 3;
+		index = e;
 	else if (motor == "T") {
 		deltat = atoi(posStr.c_str());
 	}
@@ -527,6 +558,7 @@ hardwareTimer.startOnce();
 // 4 axis stepper driver
 deltat = 2000;
 Serial.println("4 Axis Stepper driver");
+parseGcode("reassign x=3 y=0 e=1 z=2");
 reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
 hardwareTimer.startOnce();
@@ -536,7 +568,7 @@ initPins();
 
 void connectNotOk() {
 WifiStation.enable(false);
-WifiStation.config(WIFI_SSID1, WIFI_PWD1);
+WifiStation.config(WIFI_SSID, WIFI_PWD);
 WifiStation.enable(true);
 WifiStation.waitConnection(connectOk, 10, connectNotOk);
 }
@@ -578,7 +610,8 @@ debugf("spiffs disabled");
 #endif
    //ShowInfo();
 
-WifiStation.config(WIFI_SSID, WIFI_PWD);
+WifiStation.config(WIFI_SSID1, WIFI_PWD1);
 WifiStation.enable(true);
 WifiStation.waitConnection(connectOk, 12, connectNotOk);
 }
+

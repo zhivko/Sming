@@ -68,7 +68,7 @@
 	  }
 	  function onMessage(evt)
 	  {
-		//writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
+		writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
 		var res = evt.data.split(' ');
 		if (evt.data.slice(0,1) == 'X' && res.length==5)
 		{
