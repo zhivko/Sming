@@ -131,6 +131,17 @@
 		var value = a.substring(2, a.length) * 10;
 		if (translate=='translate')
 		{
+			if (sign=='+')
+				signOposite='-';
+			else
+				signOposite='+';
+			if (coord == 'X' || coord == 'Y')
+				var command = "X" + sign + value + " Y" + signOposite + value;
+			else
+				var command = "Z" + sign + value + " E" + signOposite + value;
+		}
+		else
+		{
 			if (coord == 'X' || coord == 'Y')
 				if(sign=="-")
 					var command = "X" + sign + value + " Y" + sign + value;
@@ -141,17 +152,6 @@
 					var command = "E" + sign + value + " Z" + sign + value;
 				else
 					var command = "Z" + sign + value + " E" + sign + value;				
-		}
-		else
-		{
-			if (sign=='+')
-				signOposite='-';
-			else
-				signOposite='+';
-			if (coord == 'X' || coord == 'Y')
-				var command = "X" + sign + value + " Y" + signOposite + value;
-			else
-				var command = "Z" + sign + value + " E" + signOposite + value;
 		}
 		writeToScreen("SENT: " + command); 
 		doSendCommand(command);

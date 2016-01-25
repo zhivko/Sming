@@ -269,31 +269,30 @@ return;
 } else if (commandLine.equals("disable")) {
 disableMotors();
 return;
-} else if (commandLine.startsWith("reassign"))
-{
-	//sendToClients(message)
-	//reassign x=3 y=0 z=2 e=1
-	Vector<String> commandToken;
-	int numToken = splitString(commandLine, ' ', commandToken);
-	for (int i = 1; i < numToken; i++) {
-		Vector<String> axisIndex;
-		String axisIndexStr = commandToken[i].c_str();
-		splitString(axisIndexStr, '=', axisIndex);
-		String axis = axisIndex[0].c_str();
-		if(axis.equals("x"))
-			x=atoi(axisIndex[1].c_str());
-		else if(axis.equals("y"))
-			y=atoi(axisIndex[1].c_str());
-		else if(axis.equals("z"))
-			z=atoi(axisIndex[1].c_str());
-		else if(axis.equals("e"))
-			e=atoi(axisIndex[1].c_str());
-	}
-	char buf[150];
-	sprintf(buf, "Reassign: x=%d y=%d z=%d e=%d\r\n", x,y,z,e);
-	String msgBack = String(buf);
-	sendToClients(msgBack);
-	return;
+} else if (commandLine.startsWith("reassign")) {
+//sendToClients(message)
+//reassign x=3 y=0 z=2 e=1
+Vector<String> commandToken;
+int numToken = splitString(commandLine, ' ', commandToken);
+for (int i = 1; i < numToken; i++) {
+	Vector<String> axisIndex;
+	String axisIndexStr = commandToken[i].c_str();
+	splitString(axisIndexStr, '=', axisIndex);
+	String axis = axisIndex[0].c_str();
+	if (axis.equals("x"))
+		x = atoi(axisIndex[1].c_str());
+	else if (axis.equals("y"))
+		y = atoi(axisIndex[1].c_str());
+	else if (axis.equals("z"))
+		z = atoi(axisIndex[1].c_str());
+	else if (axis.equals("e"))
+		e = atoi(axisIndex[1].c_str());
+}
+char buf[150];
+sprintf(buf, "Reassign: x=%d y=%d z=%d e=%d\r\n", x, y, z, e);
+String msgBack = String(buf);
+sendToClients(msgBack);
+return;
 }
 
 if (steppersOn) {
@@ -558,7 +557,11 @@ hardwareTimer.startOnce();
 // 4 axis stepper driver
 deltat = 2000;
 Serial.println("4 Axis Stepper driver");
-parseGcode("reassign x=3 y=0 e=1 z=2");
+if (ipString.equals("192.168.1.112"))
+	parseGcode("reassign x=3 y=0 e=1 z=2");
+else if (ipString.equals("192.168.1.111"))
+	parseGcode("reassign x=0 y=1 e=3 z=2");
+
 reportTimer.initializeMs(300, reportStatus).start();
 hardwareTimer.initializeUs(deltat, StepperTimerInt);
 hardwareTimer.startOnce();
